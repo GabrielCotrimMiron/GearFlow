@@ -1,0 +1,37 @@
+# Compilação Java
+*.class
+/build/
+/target/
+out/
+
+# NetBeans
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+.nb-gradle/
+build/
+dist/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# VS Code
+.vscode/
+
+# Arquivos temporários
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+
+# Configurações locais
+.env
+.env.*
