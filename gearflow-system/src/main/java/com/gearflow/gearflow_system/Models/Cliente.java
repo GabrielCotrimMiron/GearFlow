@@ -1,5 +1,6 @@
 package com.gearflow.gearflow_system.Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ public class Cliente extends Usuario {
 
     private String telefone;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "cliente")
     private List<Veiculo> veiculos = new ArrayList<>();
 
