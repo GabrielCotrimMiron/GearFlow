@@ -2,12 +2,12 @@ package com.gearflow.gearflow_system.model;
 
 import jakarta.persistence.Entity;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Data
+@Getter
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class Peca extends ItemOS {
@@ -20,5 +20,10 @@ public class Peca extends ItemOS {
 
     public boolean verificarEstoqueBaixo() {
         return false;
+    }
+
+    public void setCodFabri(String codFabri) {
+        verificarSePodeAlterar();
+        this.codFabri = codFabri;
     }
 }

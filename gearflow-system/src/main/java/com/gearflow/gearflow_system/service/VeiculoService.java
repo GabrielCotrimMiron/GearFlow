@@ -11,19 +11,25 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.gearflow.gearflow_system.model.OrdemServico;
+import com.gearflow.gearflow_system.Repositories.OrdemServicoRepository;
+import com.gearflow.gearflow_system.DTOs.HistoricoManutencaoDTO;
 
 @Service
 public class VeiculoService {
 
     private final VeiculoRepository veiculoRepository;
     private final ClienteRepository clienteRepository;
+    private final OrdemServicoRepository ordemServicoRepository;
 
     public VeiculoService(
             VeiculoRepository veiculoRepository,
-            ClienteRepository clienteRepository) {
+            ClienteRepository clienteRepository,
+            OrdemServicoRepository ordemServicoRepository) {
 
         this.veiculoRepository = veiculoRepository;
         this.clienteRepository = clienteRepository;
+        this.ordemServicoRepository = ordemServicoRepository;
     }
 
     @Transactional
@@ -80,6 +86,23 @@ public class VeiculoService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Veículo não encontrado."));
+    }
+
+    @Transactional(readOnly = true)
+    public List<HistoricoManutencaoDTO> buscarHistorico(Integer veiculoId) {
+
+        buscarPorId(veiculoId);
+
+        List<OrdemServico> ordens = ordemServicoRepository
+                .findByVeiculoIdOrderByDataEntradaDesc(veiculoId);
+
+        List<HistoricoManutencaoDTO> historico = new ArrayList<>();
+
+        for (OrdemServico ordem : ordens) {
+            historico.add(new HistoricoManutencaoDTO(ordem));
+        }
+
+        return historico;
     }
 
     private void validarDados(Veiculo veiculo) {
