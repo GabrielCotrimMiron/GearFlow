@@ -1,6 +1,6 @@
-package com.gearflow.gearflow_system.Repositories;
+package com.gearflow.gearflow_system.repository;
 
-import com.gearflow.gearflow_system.Models.Veiculo;
+import com.gearflow.gearflow_system.model.Veiculo;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface VeiculoRepository extends JpaRepository<Veiculo, Integer> {

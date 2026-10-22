@@ -1,4 +1,4 @@
-package com.gearflow.gearflow_system.Models;
+package com.gearflow.gearflow_system.model;
 
 import jakarta.persistence.Entity;
 
@@ -10,12 +10,15 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class Servico extends ItemOS {
+public class Peca extends ItemOS {
 
-    private Integer tempoEstim;
-    private String categoria;
+    private String codFabri;
 
-    public void aplicarDesconto(double porcentagem) {
+    public void abaterEstoque(int qtdAbater) {
         // Lógica futura
+    }
+
+    public boolean verificarEstoqueBaixo() {
+        return false;
     }
 }

@@ -1,4 +1,4 @@
-package com.gearflow.gearflow_system.Models;
+package com.gearflow.gearflow_system.model;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
