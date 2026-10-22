@@ -12,12 +12,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-@Data
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public abstract class ItemOS {
@@ -40,5 +40,36 @@ public abstract class ItemOS {
         }
 
         return 0.0;
+    }
+
+    protected void verificarSePodeAlterar() {
+        if (ordemServico != null) {
+            ordemServico.verificarSeFinalizada();
+        }
+    }
+
+    public void setDescricao(String descricao) {
+        verificarSePodeAlterar();
+        this.descricao = descricao;
+    }
+
+    public void setQtd(Integer qtd) {
+        verificarSePodeAlterar();
+        this.qtd = qtd;
+    }
+
+    public void setValorUni(BigDecimal valorUni) {
+        verificarSePodeAlterar();
+        this.valorUni = valorUni;
+    }
+
+    public void setOrdemServico(OrdemServico ordemServico) {
+        verificarSePodeAlterar();
+
+        if (ordemServico != null) {
+            ordemServico.verificarSeFinalizada();
+        }
+
+        this.ordemServico = ordemServico;
     }
 }
