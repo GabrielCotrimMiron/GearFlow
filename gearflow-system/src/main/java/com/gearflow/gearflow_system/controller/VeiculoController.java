@@ -1,12 +1,14 @@
 
-package com.gearflow.gearflow_system.Controllers;
+package com.gearflow.gearflow_system.controller;
 
-import com.gearflow.gearflow_system.Models.Veiculo;
-import com.gearflow.gearflow_system.Services.VeiculoService;
+import com.gearflow.gearflow_system.model.Veiculo;
+import com.gearflow.gearflow_system.service.VeiculoService;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
-import com.gearflow.gearflow_system.DTOs.HistoricoManutencaoDTO;
+import com.gearflow.gearflow_system.dto.HistoricoManutencaoDTO;
 
 @RestController
 @RequestMapping("/veiculos")

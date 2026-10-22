@@ -1,12 +1,12 @@
-package com.gearflow.gearflow_system.DTOs;
+package com.gearflow.gearflow_system.dto;
 
 import java.time.LocalDate;
-import com.gearflow.gearflow_system.Models.OrdemServico;
-import com.gearflow.gearflow_system.Models.StatusOperacional;
-import com.gearflow.gearflow_system.Models.StatusPagamento;
+import com.gearflow.gearflow_system.model.OrdemServico;
+import com.gearflow.gearflow_system.model.StatusOperacional;
+import com.gearflow.gearflow_system.model.StatusPagamento;
 import java.util.List;
 import java.util.ArrayList;
-import com.gearflow.gearflow_system.Models.ItemOS;
+import com.gearflow.gearflow_system.model.ItemOS;
 import lombok.Getter;
 
 @Getter

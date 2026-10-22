@@ -1,4 +1,4 @@
-package com.gearflow.gearflow_system.Models;
+package com.gearflow.gearflow_system.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
