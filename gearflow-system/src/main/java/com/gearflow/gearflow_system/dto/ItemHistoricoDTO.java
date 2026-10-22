@@ -1,8 +1,8 @@
-package com.gearflow.gearflow_system.DTOs;
+package com.gearflow.gearflow_system.dto;
 
 import java.math.BigDecimal;
 
-import com.gearflow.gearflow_system.Models.ItemOS;
+import com.gearflow.gearflow_system.model.ItemOS;
 
 import lombok.Getter;
 

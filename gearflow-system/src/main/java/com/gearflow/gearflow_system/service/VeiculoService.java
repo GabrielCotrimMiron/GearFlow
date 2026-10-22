@@ -4,6 +4,8 @@ import com.gearflow.gearflow_system.model.Cliente;
 import com.gearflow.gearflow_system.model.Veiculo;
 import com.gearflow.gearflow_system.repository.ClienteRepository;
 import com.gearflow.gearflow_system.repository.VeiculoRepository;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -12,8 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.gearflow.gearflow_system.model.OrdemServico;
-import com.gearflow.gearflow_system.Repositories.OrdemServicoRepository;
-import com.gearflow.gearflow_system.DTOs.HistoricoManutencaoDTO;
+import com.gearflow.gearflow_system.repository.OrdemServicoRepository;
+import com.gearflow.gearflow_system.dto.HistoricoManutencaoDTO;
 
 @Service
 public class VeiculoService {
