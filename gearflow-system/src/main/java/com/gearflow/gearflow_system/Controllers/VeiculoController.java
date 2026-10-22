@@ -3,11 +3,10 @@ package com.gearflow.gearflow_system.Controllers;
 
 import com.gearflow.gearflow_system.Models.Veiculo;
 import com.gearflow.gearflow_system.Services.VeiculoService;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import com.gearflow.gearflow_system.DTOs.HistoricoManutencaoDTO;
 
 @RestController
 @RequestMapping("/veiculos")
@@ -33,5 +32,12 @@ public class VeiculoController {
     @GetMapping("/{id}")
     public Veiculo buscarPorId(@PathVariable Integer id) {
         return veiculoService.buscarPorId(id);
+    }
+
+    @GetMapping("/{id}/historico")
+    public List<HistoricoManutencaoDTO> buscarHistorico(
+            @PathVariable Integer id) {
+
+        return veiculoService.buscarHistorico(id);
     }
 }
