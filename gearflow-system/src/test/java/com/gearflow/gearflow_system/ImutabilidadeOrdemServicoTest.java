@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
-import com.gearflow.gearflow_system.Models.OrdemServico;
-import com.gearflow.gearflow_system.Models.StatusOperacional;
-import com.gearflow.gearflow_system.Models.Peca;
+import com.gearflow.gearflow_system.model.OrdemServico;
+import com.gearflow.gearflow_system.model.StatusOperacional;
+import com.gearflow.gearflow_system.model.Peca;
 
 public class ImutabilidadeOrdemServicoTest {
 
