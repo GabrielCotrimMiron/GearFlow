@@ -1,0 +1,25 @@
+package com.gearflow.gearflow_system.Controllers;
+
+import com.gearflow.gearflow_system.DTOs.LoginDTO;
+import com.gearflow.gearflow_system.Services.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/auth")
+@CrossOrigin(origins = "http://localhost:5173") // Permite pedidos do seu frontend React
+public class AuthController {
+
+    @Autowired
+    private AuthService autenService;
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody LoginDTO login) {
+        if (autenService.autenticarAdmin(login)) {
+            return ResponseEntity.ok("Administrador autenticado com sucesso!");
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Email ou senha inválidos.");
+    }
+}
