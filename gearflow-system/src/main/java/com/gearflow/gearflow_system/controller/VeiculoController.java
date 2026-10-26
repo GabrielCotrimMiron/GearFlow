@@ -12,6 +12,7 @@ import com.gearflow.gearflow_system.dto.HistoricoManutencaoDTO;
 
 @RestController
 @RequestMapping("/veiculos")
+@CrossOrigin(origins = "http://localhost:5173")
 public class VeiculoController {
 
     private final VeiculoService veiculoService;
