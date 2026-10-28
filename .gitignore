@@ -35,3 +35,5 @@ Thumbs.db
 # Configurações locais
 .env
 .env.*
+
+##git gitnore em target##

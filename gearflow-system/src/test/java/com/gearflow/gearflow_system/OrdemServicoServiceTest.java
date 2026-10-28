@@ -1,13 +1,13 @@
 
 package com.gearflow.gearflow_system;
 
-import com.gearflow.gearflow_system.dto.AcompanhamentoDTO;
-import com.gearflow.gearflow_system.model.Cliente;
-import com.gearflow.gearflow_system.model.OrdemServico;
-import com.gearflow.gearflow_system.model.StatusOperacional;
-import com.gearflow.gearflow_system.model.Veiculo;
-import com.gearflow.gearflow_system.repository.OrdemServicoRepository;
-import com.gearflow.gearflow_system.service.OrdemServicoService;
+import com.gearflow.gearflow_system.DTOs.AcompanhamentoDTO;
+import com.gearflow.gearflow_system.Models.Cliente;
+import com.gearflow.gearflow_system.Models.OrdemServico;
+import com.gearflow.gearflow_system.Models.StatusOperacional;
+import com.gearflow.gearflow_system.Models.Veiculo;
+import com.gearflow.gearflow_system.Repositories.OrdemServicoRepository;
+import com.gearflow.gearflow_system.Services.OrdemServicoService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
