@@ -7,6 +7,8 @@
   --gf-surface: #FFFFFF;
   --gf-text-dark: #2D3748;
   --gf-text-muted: #718096;
+  --gf-accent: #38B2AC;
+  --gf-accent-hover: #319795;
 }
 
 /* Reset e Correção do Scroll */
@@ -309,29 +311,35 @@ html, body {
 /* ==== MODAL DE CADASTRO ==== */
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(42, 68, 84, 0.6);
-  backdrop-filter: blur(4px);
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5); /* Cor escura com transparência */
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  justify-content: center; /* Centraliza horizontalmente */
+  align-items: center; /* Centraliza verticalmente */
+  z-index: 9999; /* Garante que fica por cima de tudo */
 }
 
 .modal-content {
-  background: var(--gf-surface);
+  background-color: #ffffff;
+  padding: 30px;
   border-radius: 12px;
-  padding: 32px;
   width: 100%;
-  max-width: 500px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  max-width: 500px; /* Largura máxima para não esticar muito */
+  max-height: 90vh; /* Altura máxima de 90% da tela */
+  overflow-y: auto; /* Adiciona barra de rolagem apenas dentro do modal se necessário */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  position: relative; /* Importante para o botão de fechar (x) se posicionar corretamente */
 }
-
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
 }
 
 .btn-close {

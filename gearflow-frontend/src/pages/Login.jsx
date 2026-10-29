@@ -1,6 +1,8 @@
 // src/pages/Login.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 
 export default function Login() {
@@ -16,7 +18,13 @@ export default function Login() {
         try {
             const response = await api.post('/auth/login', { email, senha });
             console.log('Login aprovado:', response.data);
+            const {user} = response.data;
+
+            if (user == 'CLIENTE') {
+                navigate('/DashboardCliente');
+            }else{
             navigate('/dashboard');
+            }
         } catch (err) {
             setErro('Credenciais inválidas. Verifique o e-mail e a senha.');
         }
@@ -73,13 +81,32 @@ export default function Login() {
                             required
                         />
 
+
                         <button type="submit" className="btn-login">
                             Entrar
                         </button>
                     </form>
 
+                    {/* 2. Adicione um separador visual */}
+                    <div style={{ margin: '20px 0', textAlign: 'center', color: '#666' }}>
+                        <span>ou</span>
+                    </div>
+
+                    {/* 3. Coloque o botão do Google aqui embaixo */}
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <GoogleLogin
+                            onSuccess={credentialResponse => {
+                                console.log("Token recebido com sucesso:", credentialResponse.credential);
+                                // Aqui depois faremos a chamada para o backend
+                            }}
+                            onError={() => {
+                                console.log('Falha no Login com o Google');
+                            }}
+                        />
+                    </div>
+
                     <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--gf-text-muted)' }}>
-                        Esqueceu a senha? <a href="#" style={{ color: 'var(--gf-primary-dark)', fontWeight: 'bold' }}>Clique aqui</a>
+                        Não tem uma conta? <Link to="/registro" style={{ color: 'var(--gf-primary-dark)', fontWeight: 'bold' }}>Crie uma nova conta agora</Link>
                     </div>
 
                 </div>
