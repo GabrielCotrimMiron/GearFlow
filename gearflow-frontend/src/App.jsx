@@ -3,12 +3,18 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import DashboardLayout from './components/DashboardLayout';
 import GestaoEquipe from './pages/GestaoEquipe.jsx';
+import RegistroCliente from './pages/RegistroCliente';
+import DashboardCliente from "./pages/DashboardCliente.jsx";
 
 function App() {
     return (
         <Router>
             <Routes>
                 <Route path="/" element={<Login />} />
+
+                <Route path="/registro" element={<RegistroCliente />} />
+
+                <Route path="/DashboardCliente" element={<DashboardCliente />} />
 
                 <Route path="/dashboard" element={
                     <DashboardLayout titulo="Bom dia, Gerente! 👋">
@@ -20,7 +26,6 @@ function App() {
                 <Route path="/equipe" element={
                     <DashboardLayout titulo="Gestão de Equipe (RF03)">
                         <GestaoEquipe />
-                        <p>Aqui faremos o formulário para inserir os dados do novo mecânico que conectará com o POST /funcionarios.</p>
                     </DashboardLayout>
                 } />
             </Routes>

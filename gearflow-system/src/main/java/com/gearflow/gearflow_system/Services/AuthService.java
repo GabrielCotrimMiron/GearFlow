@@ -1,32 +1,36 @@
 package com.gearflow.gearflow_system.Services;
 
 import com.gearflow.gearflow_system.DTOs.LoginDTO;
+import com.gearflow.gearflow_system.DTOs.LoginResponseDTO;
+import com.gearflow.gearflow_system.Models.Funcionario;
 import com.gearflow.gearflow_system.Models.Usuario;
 import com.gearflow.gearflow_system.Repositories.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.Optional;
-import com.gearflow.gearflow_system.Models.Funcionario;
 
 @Service
 public class AuthService {
 
-    private final UsuarioRepository usuarioRepository;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
-    // Injeção de dependência do repositório
-    public AuthService(UsuarioRepository usuarioRepository) {
-        this.usuarioRepository = usuarioRepository;
-    }
+    public LoginResponseDTO autenticar(LoginDTO login) {
+        // Busca o usuário pelo e-mail
+        Usuario usuario = usuarioRepository.findByEmail(login.getEmail())
+                .orElseThrow(() -> new RuntimeException("Email ou senha inválidos."));
 
-    public boolean autenticarAdmin(LoginDTO login) {
-        Optional<Usuario> usuarioEncontrado = usuarioRepository.findByEmail(login.getEmail());
-
-        if (usuarioEncontrado.isPresent()) {
-            Usuario usuario = usuarioEncontrado.get();
-
-            return usuario instanceof Funcionario
-                    && usuario.autenticar(login.getSenha());
+        // Verifica a senha (simplificado; idealmente usar BCrypt)
+        if (!usuario.getSenha().equals(login.getSenha())) {
+            throw new RuntimeException("Email ou senha inválidos.");
         }
 
-        return false;
+        // Define o tipo de Dashboard
+        String user = "CLIENTE"; // Padrão se for instância de Cliente
+
+        if (usuario instanceof Funcionario func) {
+            user = func.getNivelAcesso().name(); // Retorna "GERENTE" ou "MECANICO"
+        }
+
+        return new LoginResponseDTO(usuario.getId(), usuario.getNome(), user);
     }
 }
