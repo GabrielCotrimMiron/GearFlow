@@ -5,6 +5,7 @@ import DashboardLayout from './components/DashboardLayout';
 import GestaoEquipe from './pages/GestaoEquipe.jsx';
 import RegistroCliente from './pages/RegistroCliente';
 import DashboardCliente from "./pages/DashboardCliente.jsx";
+import GestaoPecas from "./pages/GestaoPecas.jsx";
 
 function App() {
     return (
@@ -24,8 +25,13 @@ function App() {
                 } />
 
                 <Route path="/equipe" element={
-                    <DashboardLayout titulo="Gestão de Equipe (RF03)">
+                    <DashboardLayout titulo="Gestão de Equipe">
                         <GestaoEquipe />
+                    </DashboardLayout>
+                } />
+                <Route path="/pecas" element={
+                    <DashboardLayout titulo="Gestão de Peças/Estoque">
+                        <GestaoPecas/>
                     </DashboardLayout>
                 } />
             </Routes>

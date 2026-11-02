@@ -7,6 +7,7 @@ export default function Equipe() {
     const [equipe, setEquipe] = useState([]);
     const [termoBusca, setTermoBusca] = useState('');
     const [funcionarioEmEdicao, setFuncionarioEmEdicao] = useState(null);
+    const [funcionarioDetalhe, setFuncionarioDetalhe] = useState(null);
 
     const [formData, setFormData] = useState({
         nome: '', email: '', senha: '', cpf: '', nivelAcesso: 'MECANICO'
@@ -114,7 +115,12 @@ export default function Equipe() {
                     </p>
                 ) : (
                     equipeFiltrada.map((func, index) => (
-                        <div key={func.id ?? `${func.email}-${index}`} className="employee-card">
+                        <div
+                            key={func.id ?? `${func.email}-${index}`}
+                            className="employee-card"
+                            onClick={() => setFuncionarioDetalhe(func)} // <-- ADICIONE ISSO
+                            style={{ cursor: 'pointer' }}               // <-- E ISSO
+                        >
                             <span className="badge-active">ATIVO</span>
                             <div className="card-profile">
                                 <div className="avatar-placeholder">
@@ -134,10 +140,23 @@ export default function Equipe() {
                                 <p>🏷️ Matrícula: {func.matricula}</p>
                             </div>
                             <div className="card-actions">
-                                <button className="btn-action btn-edit" onClick={() => abrirModalEdicao(func)}>
+                                <button
+                                    className="btn-action btn-edit"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // <-- Trava o clique aqui no botão
+                                        abrirModalEdicao(func);
+                                    }}
+                                >
                                     Editar
                                 </button>
-                                <button className="btn-action btn-view" style={{ color: '#E53E3E' }} onClick={() => handleExcluir(func.id)}>
+                                <button
+                                    className="btn-action btn-view"
+                                    style={{ color: '#E53E3E' }}
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // <-- Trava o clique aqui no botão
+                                        handleExcluir(func.id);
+                                    }}
+                                >
                                     Excluir
                                 </button>
                             </div>
@@ -205,6 +224,33 @@ export default function Equipe() {
                 </div>,
                 document.body
             )}
+            {funcionarioDetalhe && createPortal(
+                <div className="modal-overlay" onClick={() => setFuncionarioDetalhe(null)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 style={{ color: 'var(--gf-primary-dark)' }}>Ficha do Funcionário</h2>
+                            <button className="btn-close" onClick={() => setFuncionarioDetalhe(null)}>×</button>
+                        </div>
+
+                        <div className="card-info" style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '1rem', marginTop: '12px' }}>
+                            <p><strong>ID no Sistema:</strong> #{funcionarioDetalhe.id}</p>
+                            <p><strong>Nome Completo:</strong> {funcionarioDetalhe.nome}</p>
+                            <p><strong>CPF:</strong> {funcionarioDetalhe.cpf || 'Não informado'}</p>
+                            <p><strong>E-mail:</strong> {funcionarioDetalhe.email}</p>
+                            <p><strong>Matrícula:</strong> {funcionarioDetalhe.matricula || 'N/A'}</p>
+                            <p><strong>Cargo / Nível de Acesso:</strong> {funcionarioDetalhe.nivelAcesso}</p>
+                        </div>
+
+                        <div className="card-actions" style={{ marginTop: '24px' }}>
+                            <button className="btn-action btn-view" onClick={() => setFuncionarioDetalhe(null)}>
+                                Fechar
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
+
 }

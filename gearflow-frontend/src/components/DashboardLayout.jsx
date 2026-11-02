@@ -29,6 +29,7 @@ export default function DashboardLayout({ children, titulo, subtitulo, tipoUsuar
                         <>
                             <NavLink to="/dashboard" className="menu-link">📊 Visão Geral</NavLink>
                             <NavLink to="/equipe" className="menu-link">👥 Gestão de Equipe</NavLink>
+                            <NavLink to="/pecas" className="menu-link">🔧 Gestão de Peças</NavLink>
                         </>
                     )}
                 </nav>

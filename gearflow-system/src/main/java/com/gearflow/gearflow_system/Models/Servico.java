@@ -20,12 +20,12 @@ public class Servico extends ItemOS {
     }
 
     public void setTempoEstim(Integer tempoEstim) {
-        verificarSePodeAlterar();
+        verificarAlteracao();
         this.tempoEstim = tempoEstim;
     }
 
     public void setCategoria(String categoria) {
-        verificarSePodeAlterar();
+        verificarAlteracao();
         this.categoria = categoria;
     }
 }
