@@ -1,6 +1,6 @@
 package com.gearflow.gearflow_system.Services;
 
-import com.gearflow.gearflow_system.dto.ClienteDTO;
+import com.gearflow.gearflow_system.DTOs.ClienteDTO;
 import com.gearflow.gearflow_system.Models.Cliente;
 import com.gearflow.gearflow_system.Repositories.ClienteRepository;
 import org.springframework.stereotype.Service;

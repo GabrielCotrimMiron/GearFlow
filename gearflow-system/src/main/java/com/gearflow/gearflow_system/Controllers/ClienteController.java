@@ -1,6 +1,6 @@
 package com.gearflow.gearflow_system.Controllers;
 
-import com.gearflow.gearflow_system.dto.ClienteDTO;
+import com.gearflow.gearflow_system.DTOs.ClienteDTO;
 import com.gearflow.gearflow_system.Models.Cliente;
 import com.gearflow.gearflow_system.Services.ClienteService;
 import org.springframework.http.HttpStatus;
