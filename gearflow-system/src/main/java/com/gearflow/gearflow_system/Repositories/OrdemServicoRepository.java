@@ -1,3 +1,4 @@
+
 package com.gearflow.gearflow_system.Repositories;
 
 import java.util.List;
@@ -9,6 +10,9 @@ import com.gearflow.gearflow_system.Models.OrdemServico;
 public interface OrdemServicoRepository
         extends JpaRepository<OrdemServico, Integer> {
 
-    List<OrdemServico> findByVeiculoIdOrderByDataEntradaDesc(Integer veiculoId);
+    List<OrdemServico> findByVeiculoIdOrderByDataEntradaDesc(
+            Integer veiculoId);
 
+    List<OrdemServico> findByVeiculoClienteEmailIgnoreCaseOrderByDataEntradaDesc(
+            String email);
 }

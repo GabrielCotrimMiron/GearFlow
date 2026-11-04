@@ -1,4 +1,4 @@
-package com.gearflow.gearflow_system.dto;
+package com.gearflow.gearflow_system.DTOs;
 
 import lombok.Data;
 

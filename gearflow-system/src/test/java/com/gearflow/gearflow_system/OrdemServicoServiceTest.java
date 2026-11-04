@@ -30,10 +30,15 @@ class OrdemServicoServiceTest {
     void preparar() {
         repository = mock(OrdemServicoRepository.class);
         authentication = mock(Authentication.class);
+
         service = new OrdemServicoService(repository);
 
+        // Simula um cliente autenticado.
         when(authentication.getName())
                 .thenReturn("cliente@teste.com");
+
+        when(authentication.isAuthenticated())
+                .thenReturn(true);
     }
 
     @Test
@@ -51,12 +56,20 @@ class OrdemServicoServiceTest {
         when(repository.findById(1))
                 .thenReturn(Optional.of(ordem));
 
-        AcompanhamentoDTO resultado = service.buscarAcompanhamento(1, authentication);
+        AcompanhamentoDTO resultado =
+                service.buscarAcompanhamento(1, authentication);
 
-        assertEquals(StatusOperacional.EM_EXECUCAO,
-                resultado.getStatus());
-        assertEquals("Nao atribuido",
-                resultado.getMecanicoResponsavel());
+        assertNotNull(resultado);
+
+        assertEquals(
+                StatusOperacional.EM_EXECUCAO,
+                resultado.getStatus()
+        );
+
+        assertEquals(
+                "Nao atribuido",
+                resultado.getMecanicoResponsavel()
+        );
     }
 
     @Test
@@ -73,11 +86,18 @@ class OrdemServicoServiceTest {
         when(repository.findById(2))
                 .thenReturn(Optional.of(ordem));
 
-        ResponseStatusException erro = assertThrows(ResponseStatusException.class,
-                () -> service.buscarAcompanhamento(2, authentication));
+        ResponseStatusException erro = assertThrows(
+                ResponseStatusException.class,
+                () -> service.buscarAcompanhamento(
+                        2,
+                        authentication
+                )
+        );
 
-        assertEquals(HttpStatus.FORBIDDEN,
-                erro.getStatusCode());
+        assertEquals(
+                HttpStatus.FORBIDDEN,
+                erro.getStatusCode()
+        );
     }
 
     @Test
@@ -85,10 +105,17 @@ class OrdemServicoServiceTest {
         when(repository.findById(999))
                 .thenReturn(Optional.empty());
 
-        ResponseStatusException erro = assertThrows(ResponseStatusException.class,
-                () -> service.buscarAcompanhamento(999, authentication));
+        ResponseStatusException erro = assertThrows(
+                ResponseStatusException.class,
+                () -> service.buscarAcompanhamento(
+                        999,
+                        authentication
+                )
+        );
 
-        assertEquals(HttpStatus.NOT_FOUND,
-                erro.getStatusCode());
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                erro.getStatusCode()
+        );
     }
 }
