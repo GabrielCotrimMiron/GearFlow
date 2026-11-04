@@ -44,6 +44,9 @@ public class OrdemServico {
     @Enumerated(EnumType.STRING)
     private StatusPagamento statusPag;
 
+    @Enumerated(EnumType.STRING)
+    private PrioridadeOS prioridade = PrioridadeOS.NORMAL;
+
     @OneToMany(mappedBy = "ordemServico")
     private List<ItemOS> itens = new ArrayList<>();
 
@@ -119,6 +122,17 @@ public class OrdemServico {
     public void setObsDiag(String obsDiag) {
         verificarSeFinalizada();
         this.obsDiag = obsDiag;
+    }
+
+    public void setPrioridade(PrioridadeOS prioridade) {
+        verificarSeFinalizada();
+
+        if (prioridade == null) {
+            throw new IllegalArgumentException(
+                    "A prioridade nao pode ser nula.");
+        }
+
+        this.prioridade = prioridade;
     }
 
 }

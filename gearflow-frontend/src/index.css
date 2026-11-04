@@ -392,3 +392,69 @@ html, body {
 .btn-submit:hover {
   background-color: var(--gf-accent-hover);
 }
+
+
+/* ==========================================
+   PADRONIZAÇÃO DE BOTÕES — GEARFLOW
+   ========================================== */
+
+.btn-primary,
+.btn-submit,
+.btn-view {
+  background: #38b2ac;
+  color: #ffffff;
+  border: 1px solid #38b2ac;
+  border-radius: 9px;
+  font-weight: 650;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover,
+.btn-submit:hover,
+.btn-view:hover {
+  background: #278f8b;
+  border-color: #278f8b;
+  color: #ffffff;
+}
+
+.btn-edit {
+  background: #ffffff;
+  color: #278f8b;
+  border: 1px solid #38b2ac;
+  border-radius: 9px;
+}
+
+.btn-edit:hover {
+  background: #e7f6f4;
+}
+
+/* Botões de exclusão */
+.btn-delete,
+.btn-danger {
+  background: #fff0f0;
+  color: #b63838;
+  border: 1px solid #f1caca;
+  border-radius: 9px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.btn-delete:hover,
+.btn-danger:hover {
+  background: #b63838;
+  color: #ffffff;
+  border-color: #b63838;
+}
+
+/* Acessibilidade */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(56, 178, 172, 0.3);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

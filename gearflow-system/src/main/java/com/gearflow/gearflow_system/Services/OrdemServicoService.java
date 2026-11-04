@@ -2,9 +2,13 @@
 package com.gearflow.gearflow_system.Services;
 
 import com.gearflow.gearflow_system.DTOs.AcompanhamentoDTO;
+import com.gearflow.gearflow_system.DTOs.FilaPrioridadeDTO;
 import com.gearflow.gearflow_system.DTOs.OrcamentoDTO;
-import com.gearflow.gearflow_system.Models.OrdemServico;
+import com.gearflow.gearflow_system.DTOs.OrdemServicoResumoDTO;
+
 import com.gearflow.gearflow_system.Models.Cliente;
+import com.gearflow.gearflow_system.Models.OrdemServico;
+import com.gearflow.gearflow_system.Models.PrioridadeOS;
 import com.gearflow.gearflow_system.Repositories.OrdemServicoRepository;
 
 import org.springframework.http.HttpStatus;
@@ -14,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import com.gearflow.gearflow_system.DTOs.OrdemServicoResumoDTO;
 
 @Service
 public class OrdemServicoService {
@@ -23,6 +26,44 @@ public class OrdemServicoService {
 
     public OrdemServicoService(OrdemServicoRepository ordemServicoRepository) {
         this.ordemServicoRepository = ordemServicoRepository;
+    }
+
+    // RF05 - Fila de prioridade das ordens de servico
+    @Transactional(readOnly = true)
+    public List<FilaPrioridadeDTO> listarFilaPrioridade() {
+
+        return ordemServicoRepository.listarFilaPrioridade()
+                .stream()
+                .map(FilaPrioridadeDTO::new)
+                .toList();
+    }
+
+    // RF05 - Alterar prioridade de uma ordem de servico
+    @Transactional
+    public void alterarPrioridade(Integer id, PrioridadeOS prioridade) {
+
+        if (prioridade == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A prioridade deve ser informada");
+        }
+
+        OrdemServico ordem = ordemServicoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Ordem de servico nao encontrada"));
+
+        if (ordem.getStatusOperac() ==
+                com.gearflow.gearflow_system.Models.StatusOperacional.FINALIZADA) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Nao e permitido alterar a prioridade de uma OS finalizada");
+        }
+
+        ordem.setPrioridade(prioridade);
+
+        ordemServicoRepository.save(ordem);
     }
 
     // RF12 - Acompanhamento da Ordem de Servico
