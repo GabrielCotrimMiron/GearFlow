@@ -8,7 +8,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/gearflow
     username: root
-    password: Miron123
+    password: ${DB_PASSWORD}
 
 
   jpa:
