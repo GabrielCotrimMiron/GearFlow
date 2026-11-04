@@ -5,6 +5,8 @@ import DashboardLayout from './components/DashboardLayout';
 import GestaoEquipe from './pages/GestaoEquipe.jsx';
 import RegistroCliente from './pages/RegistroCliente';
 import DashboardCliente from "./pages/DashboardCliente.jsx";
+import GestaoPecas from "./pages/GestaoPecas.jsx";
+import Servicos from './pages/Servicos.jsx';
 
 function App() {
     return (
@@ -24,10 +26,26 @@ function App() {
                 } />
 
                 <Route path="/equipe" element={
-                    <DashboardLayout titulo="Gestão de Equipe (RF03)">
+                    <DashboardLayout titulo="Gestão de Equipe">
                         <GestaoEquipe />
                     </DashboardLayout>
                 } />
+                <Route path="/pecas" element={
+                    <DashboardLayout titulo="Gestão de Peças/Estoque">
+                        <GestaoPecas/>
+                    </DashboardLayout>
+                } />
+                <Route
+                    path="/servicos"
+                    element={
+                        <DashboardLayout
+                            titulo="Catálogo de Serviços"
+                            subtitulo="Definição de preços fixos de mão de obra e tempos estimados"
+                        >
+                            <Servicos />
+                        </DashboardLayout>
+                    }
+                />
             </Routes>
         </Router>
     );

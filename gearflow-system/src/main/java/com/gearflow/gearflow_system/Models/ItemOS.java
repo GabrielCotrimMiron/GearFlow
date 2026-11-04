@@ -2,6 +2,8 @@ package com.gearflow.gearflow_system.Models;
 
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,10 +16,12 @@ import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public abstract class ItemOS {
@@ -32,6 +36,7 @@ public abstract class ItemOS {
 
     @ManyToOne
     @JoinColumn(name = "ordem_servico_id")
+    @JsonIgnore
     private OrdemServico ordemServico;
 
     public double calcularSubtotal() {
@@ -42,29 +47,29 @@ public abstract class ItemOS {
         return 0.0;
     }
 
-    protected void verificarSePodeAlterar() {
+    protected void verificarAlteracao() {
         if (ordemServico != null) {
             ordemServico.verificarSeFinalizada();
         }
     }
 
     public void setDescricao(String descricao) {
-        verificarSePodeAlterar();
+        verificarAlteracao();
         this.descricao = descricao;
     }
 
     public void setQtd(Integer qtd) {
-        verificarSePodeAlterar();
+        verificarAlteracao();
         this.qtd = qtd;
     }
 
     public void setValorUni(BigDecimal valorUni) {
-        verificarSePodeAlterar();
+        verificarAlteracao();
         this.valorUni = valorUni;
     }
 
     public void setOrdemServico(OrdemServico ordemServico) {
-        verificarSePodeAlterar();
+        verificarAlteracao();
 
         if (ordemServico != null) {
             ordemServico.verificarSeFinalizada();
