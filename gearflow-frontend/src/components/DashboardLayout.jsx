@@ -1,56 +1,178 @@
-import { NavLink } from 'react-router-dom';
 
-export default function DashboardLayout({ children, titulo, subtitulo, tipoUsuario = 'FUNCIONARIO' }) {
-    return (
-        <div style={{ display: 'flex', minHeight: '100vh' }}>
-            <aside className="sidebar">
-                <div style={{ marginBottom: '48px', textAlign: 'center' }}>
-                    <h2 style={{ color: '#FFFFFF', fontSize: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                        <span style={{ color: 'var(--gf-accent)' }}>⚙️</span> Gearflow
-                    </h2>
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { limparCredenciais } from "../services/clienteAuth";
+import "./DashboardLayout.css";
 
+const icones = {
+  painel: "▦",
+  carro: "🚗",
+  ordem: "🛠",
+  usuario: "◉",
+  equipe: "♙",
+  pecas: "⚙",
+  servicos: "☷",
+  prioridade: "⚑",
+};
 
-                    {tipoUsuario === 'CLIENTE' ? (
-                        <p style={{ color: '#A0AEC0', fontSize: '0.9rem', marginTop: '4px' }}>Área do Cliente</p>
-                    ) : ( <p style={{ color: '#A0AEC0', fontSize: '0.9rem', marginTop: '4px' }}>Área do Funcionário</p>
+export default function DashboardLayout({
+  children,
+  titulo,
+  subtitulo,
+  tipoUsuario = "FUNCIONARIO",
+}) {
+  const navigate = useNavigate();
+  const [menuAberto, setMenuAberto] = useState(false);
 
-                    )}
-                </div>
+  const cliente = tipoUsuario === "CLIENTE";
 
-                <nav style={{ display: 'flex', flexDirection: 'column' }}>
-                    {tipoUsuario === 'CLIENTE' ? (
-                        <>
-                            <NavLink to="/DashboardCliente" className="menu-link">📊 Visão Geral</NavLink>
-                            <NavLink to="/meus-veiculos" className="menu-link">🚗 Meus Veículos</NavLink>
-                            <NavLink to="/minhas-os" className="menu-link">🛠️ Ordens de Serviço</NavLink>
-                            <NavLink to="/meu-perfil" className="menu-link">👤 Meu Perfil</NavLink>
-                        </>
-                    ) : (
-                        <>
-                            <NavLink to="/dashboard" className="menu-link">📊 Visão Geral</NavLink>
-                            <NavLink to="/equipe" className="menu-link">👥 Gestão de Equipe</NavLink>
-                            <NavLink to="/pecas" className="menu-link">🔧 Gestão de Peças</NavLink>
-                            <NavLink to="/servicos" className="menu-link">🛠️ Catálogo de Serviços</NavLink>
-                        </>
-                    )}
-                </nav>
+  const links = cliente
+    ? [
+        { rota: "/DashboardCliente", texto: "Visão Geral", icone: "painel" },
+        { rota: "/meus-veiculos", texto: "Meus Veículos", icone: "carro" },
+        { rota: "/minhas-os", texto: "Ordens de Serviço", icone: "ordem" },
+        { rota: "/meu-perfil", texto: "Meu Perfil", icone: "usuario" },
+      ]
+    : [
+        { rota: "/dashboard", texto: "Visão Geral", icone: "painel" },
+        { rota: "/equipe", texto: "Gestão de Equipe", icone: "equipe" },
+        { rota: "/pecas", texto: "Gestão de Peças", icone: "pecas" },
+        { rota: "/servicos", texto: "Catálogo de Serviços", icone: "servicos" },
+        {
+          rota: "/fila-prioridade",
+          texto: "Fila de Prioridades",
+          icone: "prioridade",
+        },
+      ];
 
-                <div style={{ marginTop: 'auto' }}>
-                    <button className="btn-logout">Sair do Sistema</button>
-                </div>
-            </aside>
+  function handleLogout() {
+    limparCredenciais();
+    navigate("/", { replace: true });
+  }
 
-            <main style={{ flex: 1, padding: '48px', display: 'flex', flexDirection: 'column' }}>
-                <header style={{ marginBottom: '40px' }}>
-                    <h1 style={{ color: 'var(--gf-primary-dark)', fontSize: '2.2rem', fontWeight: '700' }}>{titulo}</h1>
-                    {subtitulo && (
-                        <p style={{ color: 'var(--gf-text-muted)', fontSize: '1.1rem', marginTop: '8px' }}>{subtitulo}</p>
-                    )}
-                </header>
-                <div className="glass-card">
-                    {children}
-                </div>
-            </main>
+  return (
+    <div className="gf-layout">
+      {menuAberto && (
+        <button
+          type="button"
+          className="gf-sidebar-overlay"
+          aria-label="Fechar menu"
+          onClick={() => setMenuAberto(false)}
+        />
+      )}
+
+      <aside className={`sidebar gf-sidebar ${menuAberto ? "gf-sidebar-open" : ""}`}>
+        <div className="gf-brand">
+          <div className="gf-brand-icon">⚙</div>
+
+          <div>
+            <h2>GearFlow</h2>
+            <p>Gestão inteligente</p>
+          </div>
         </div>
-    );
+
+        <div className="gf-workspace">
+          <div className="gf-workspace-avatar">
+            {cliente ? "C" : "F"}
+          </div>
+
+          <div>
+            <span className="gf-workspace-label">ÁREA DE ACESSO</span>
+            <strong>{cliente ? "Portal do Cliente" : "Painel da Oficina"}</strong>
+          </div>
+        </div>
+
+        <nav className="gf-navigation" aria-label="Menu principal">
+          <p className="gf-nav-caption">MENU PRINCIPAL</p>
+
+          {links.map((link) => (
+            <NavLink
+              key={link.rota}
+              to={link.rota}
+              className={({ isActive }) =>
+                `menu-link gf-nav-link ${isActive ? "active" : ""}`
+              }
+              onClick={() => setMenuAberto(false)}
+            >
+              <span className="gf-nav-icon" aria-hidden="true">
+                {icones[link.icone]}
+              </span>
+              <span>{link.texto}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="gf-sidebar-footer">
+          <div className="gf-sidebar-help">
+            <span className="gf-help-indicator" />
+            <div>
+              <strong>Sistema operacional</strong>
+              <p>GearFlow • Oficina</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="btn-logout gf-logout"
+            onClick={handleLogout}
+          >
+            <span aria-hidden="true">↪</span>
+            Sair do Sistema
+          </button>
+        </div>
+      </aside>
+
+      <div className="gf-main-area">
+        <div className="gf-topbar">
+          <button
+            type="button"
+            className="gf-menu-toggle"
+            aria-label="Abrir menu"
+            aria-expanded={menuAberto}
+            onClick={() => setMenuAberto(!menuAberto)}
+          >
+            ☰
+          </button>
+
+          <div className="gf-topbar-location">
+            <span>GearFlow</span>
+            <span className="gf-breadcrumb-separator">/</span>
+            <strong>{titulo || "Painel"}</strong>
+          </div>
+
+          <div className="gf-topbar-right">
+            <span className="gf-online-dot" />
+            <span>Ambiente de gestão</span>
+          </div>
+        </div>
+
+        <main className="gf-content">
+          <header className="gf-page-header">
+            <div>
+              <p className="gf-page-eyebrow">
+                {cliente ? "ESPAÇO DO CLIENTE" : "CENTRAL DE GESTÃO"}
+              </p>
+
+              <h1>{titulo || "Painel GearFlow"}</h1>
+
+              {subtitulo && <p className="gf-page-subtitle">{subtitulo}</p>}
+            </div>
+
+            <div className="gf-page-header-decoration" aria-hidden="true">
+              <span>⚙</span>
+            </div>
+          </header>
+
+          <section className="glass-card gf-content-card">
+            {children}
+          </section>
+
+          <footer className="gf-main-footer">
+            <span>© {new Date().getFullYear()} GearFlow</span>
+            <span>Sistema de Gerenciamento de Oficina Mecânica</span>
+          </footer>
+        </main>
+      </div>
+    </div>
+  );
 }

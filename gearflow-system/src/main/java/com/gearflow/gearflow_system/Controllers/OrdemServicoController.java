@@ -2,14 +2,16 @@
 package com.gearflow.gearflow_system.Controllers;
 
 import com.gearflow.gearflow_system.DTOs.AcompanhamentoDTO;
+import com.gearflow.gearflow_system.DTOs.FilaPrioridadeDTO;
 import com.gearflow.gearflow_system.DTOs.OrcamentoDTO;
+import com.gearflow.gearflow_system.DTOs.OrdemServicoResumoDTO;
+import com.gearflow.gearflow_system.Models.PrioridadeOS;
 import com.gearflow.gearflow_system.Services.OrdemServicoService;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import com.gearflow.gearflow_system.DTOs.OrdemServicoResumoDTO;
 
 @RestController
 @RequestMapping("/ordens-servico")
@@ -21,6 +23,22 @@ public class OrdemServicoController {
         this.ordemServicoService = ordemServicoService;
     }
 
+    // RF05 - Consultar fila de prioridade
+    @GetMapping("/fila-prioridade")
+    public List<FilaPrioridadeDTO> listarFilaPrioridade() {
+        return ordemServicoService.listarFilaPrioridade();
+    }
+
+    // RF05 - Alterar prioridade de uma OS
+    @PutMapping("/{id}/prioridade")
+    public void alterarPrioridade(
+            @PathVariable Integer id,
+            @RequestParam PrioridadeOS prioridade) {
+
+        ordemServicoService.alterarPrioridade(id, prioridade);
+    }
+
+    // RF12 - Acompanhamento da OS
     @GetMapping("/{id}/acompanhamento")
     public AcompanhamentoDTO buscarAcompanhamento(
             @PathVariable Integer id,
@@ -29,6 +47,7 @@ public class OrdemServicoController {
         return ordemServicoService.buscarAcompanhamento(id, authentication);
     }
 
+    // RF13 - Visualizacao do orcamento
     @GetMapping("/{id}/orcamento")
     public OrcamentoDTO buscarOrcamento(
             @PathVariable Integer id,

@@ -1,13 +1,9 @@
-
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 
 import api from "../services/api";
-import {
-  salvarCredenciais,
-  limparCredenciais,
-} from "../services/clienteAuth";
+import { salvarCredenciais, limparCredenciais } from "../services/clienteAuth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -35,19 +31,18 @@ export default function Login() {
       const { user } = response.data;
 
       if (user === "CLIENTE") {
-        // Armazena temporariamente as credenciais em memória
-        // para as requisições protegidas da RF12 e RF13.
         salvarCredenciais(email.trim(), senha);
 
         navigate("/DashboardCliente", { replace: true });
       } else {
-        // Preserva o acesso dos funcionários.
+        // Funcionarios tambem precisam de autenticacao
+        // para consultar a fila de prioridades.
+        salvarCredenciais(email.trim(), senha);
+
         navigate("/dashboard", { replace: true });
       }
     } catch {
-      setErro(
-        "Credenciais inválidas. Verifique o e-mail e a senha."
-      );
+      setErro("Credenciais inválidas. Verifique o e-mail e a senha.");
     } finally {
       setCarregando(false);
     }
@@ -75,22 +70,17 @@ export default function Login() {
         </h1>
 
         <p className="login-banner-subtitle">
-          Deixe as tarefas manuais da sua oficina no passado.
-          Aumente a produtividade através da automação e poupe
-          imenso tempo!
+          Deixe as tarefas manuais da sua oficina no passado. Aumente a
+          produtividade através da automação e poupe imenso tempo!
         </p>
       </div>
 
       {/* Lado direito - Formulário */}
       <div className="login-form-container">
         <div className="login-form-box">
-          <div className="login-header-logo">
-            Gearflow
-          </div>
+          <div className="login-header-logo">Gearflow</div>
 
-          <h2 className="login-title">
-            Bem-vindo de volta!
-          </h2>
+          <h2 className="login-title">Bem-vindo de volta!</h2>
 
           <p className="login-subtitle">
             Entre com as suas credenciais para gerir o sistema.
@@ -130,11 +120,7 @@ export default function Login() {
               required
             />
 
-            <button
-              type="submit"
-              className="btn-login"
-              disabled={carregando}
-            >
+            <button type="submit" className="btn-login" disabled={carregando}>
               {carregando ? "Entrando..." : "Entrar"}
             </button>
           </form>
@@ -160,13 +146,11 @@ export default function Login() {
             <GoogleLogin
               onSuccess={() => {
                 console.log(
-                  "Autenticação Google recebida. Integração pendente."
+                  "Autenticação Google recebida. Integração pendente.",
                 );
               }}
               onError={() => {
-                console.log(
-                  "Falha no Login com o Google"
-                );
+                console.log("Falha no Login com o Google");
               }}
             />
           </div>
