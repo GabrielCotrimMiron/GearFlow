@@ -506,4 +506,17 @@
   .fila-tabela td {
     padding: 13px 16px;
   }
+  .fila-cabecalho-acoes {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 650px) {
+    .fila-cabecalho-acoes {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
 }
