@@ -32,6 +32,13 @@ public class SecurityConfig {
                                 .cors(Customizer.withDefaults())
                                 .csrf(csrf -> csrf.disable())
                                 .authorizeHttpRequests(auth -> auth
+                                        
+                                                // Listagem geral das ordens de servico
+                                                // Acesso restrito aos funcionarios
+                                                .requestMatchers(
+                                                                HttpMethod.GET,
+                                                                "/ordens-servico")
+                                                .hasRole("FUNCIONARIO")
 
                                                 // RF05 - Somente funcionarios
                                                 .requestMatchers(
@@ -43,6 +50,13 @@ public class SecurityConfig {
                                                 .requestMatchers(
                                                                 HttpMethod.PUT,
                                                                 "/ordens-servico/*/prioridade")
+                                                .hasRole("FUNCIONARIO")
+
+                                                // RF09 - Fechamento de rascunho
+                                                // Acesso restrito a funcionarios
+                                                .requestMatchers(
+                                                                HttpMethod.PUT,
+                                                                "/ordens-servico/*/fechar-rascunho")
                                                 .hasRole("FUNCIONARIO")
 
                                                 // RF12 e RF13 - Cliente autenticado

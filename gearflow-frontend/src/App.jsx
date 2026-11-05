@@ -1,4 +1,3 @@
-
 import Login from "./pages/Login";
 import DashboardLayout from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -9,6 +8,7 @@ import GestaoPecas from "./pages/GestaoPecas.jsx";
 import Servicos from "./pages/Servicos.jsx";
 import FilaPrioridade from "./pages/FilaPrioridade.jsx";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import GestaoOrdensServico from "./pages/GestaoOrdensServico.jsx";
 
 function App() {
   return (
@@ -18,10 +18,7 @@ function App() {
 
         <Route path="/registro" element={<RegistroCliente />} />
 
-        <Route
-          path="/DashboardCliente"
-          element={<DashboardCliente />}
-        />
+        <Route path="/DashboardCliente" element={<DashboardCliente />} />
 
         <Route
           path="/dashboard"
@@ -67,6 +64,17 @@ function App() {
           element={
             <DashboardLayout titulo="Fila de Prioridade">
               <FilaPrioridade />
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/ordens-servico"
+          element={
+            <DashboardLayout
+              titulo="Gestão de Ordens de Serviço"
+              subtitulo="Acompanhe os atendimentos, revise orçamentos e gerencie as ordens da oficina"
+            >
+              <GestaoOrdensServico />
             </DashboardLayout>
           }
         />
