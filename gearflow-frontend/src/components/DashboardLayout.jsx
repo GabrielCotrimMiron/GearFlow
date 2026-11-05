@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { limparCredenciais } from "../services/clienteAuth";
@@ -13,6 +12,7 @@ const icones = {
   pecas: "⚙",
   servicos: "☷",
   prioridade: "⚑",
+  gestaoOS: "▤",
 };
 
 export default function DashboardLayout({
@@ -43,6 +43,11 @@ export default function DashboardLayout({
           texto: "Fila de Prioridades",
           icone: "prioridade",
         },
+        {
+          rota: "/ordens-servico",
+          texto: "Gestão de Ordens de Serviço",
+          icone: "gestaoOS",
+        },
       ];
 
   function handleLogout() {
@@ -61,7 +66,9 @@ export default function DashboardLayout({
         />
       )}
 
-      <aside className={`sidebar gf-sidebar ${menuAberto ? "gf-sidebar-open" : ""}`}>
+      <aside
+        className={`sidebar gf-sidebar ${menuAberto ? "gf-sidebar-open" : ""}`}
+      >
         <div className="gf-brand">
           <div className="gf-brand-icon">⚙</div>
 
@@ -72,13 +79,13 @@ export default function DashboardLayout({
         </div>
 
         <div className="gf-workspace">
-          <div className="gf-workspace-avatar">
-            {cliente ? "C" : "F"}
-          </div>
+          <div className="gf-workspace-avatar">{cliente ? "C" : "F"}</div>
 
           <div>
             <span className="gf-workspace-label">ÁREA DE ACESSO</span>
-            <strong>{cliente ? "Portal do Cliente" : "Painel da Oficina"}</strong>
+            <strong>
+              {cliente ? "Portal do Cliente" : "Painel da Oficina"}
+            </strong>
           </div>
         </div>
 
@@ -163,9 +170,7 @@ export default function DashboardLayout({
             </div>
           </header>
 
-          <section className="glass-card gf-content-card">
-            {children}
-          </section>
+          <section className="glass-card gf-content-card">{children}</section>
 
           <footer className="gf-main-footer">
             <span>© {new Date().getFullYear()} GearFlow</span>

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -17,6 +18,10 @@ import java.util.Collections;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+
+import jakarta.persistence.Column;
 
 @Entity
 @Getter
@@ -56,6 +61,38 @@ public class OrdemServico {
 
     private String obsDiag;
 
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal desconto = BigDecimal.ZERO;
+
+    public void aplicarDesconto(BigDecimal desconto) {
+        verificarSeFinalizada();
+
+        if (desconto == null || desconto.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException(
+                    "O desconto nao pode ser negativo ou nulo.");
+        }
+
+        BigDecimal total = itens.stream()
+                .map(item -> BigDecimal.valueOf(item.calcularSubtotal()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (desconto.compareTo(total) > 0) {
+            throw new IllegalArgumentException(
+                    "O desconto nao pode ser maior que o valor total.");
+        }
+
+        this.desconto = desconto;
+    }
+
+    public BigDecimal calcularTotalComDesconto() {
+        BigDecimal total = itens.stream()
+                .map(item -> BigDecimal.valueOf(item.calcularSubtotal()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return total.subtract(
+                desconto == null ? BigDecimal.ZERO : desconto);
+    }
+
     public void adicionarItem(ItemOS item) {
         verificarSeFinalizada();
 
@@ -83,9 +120,11 @@ public class OrdemServico {
     }
 
     public void verificarSeFinalizada() {
-        if (this.statusOperac == StatusOperacional.FINALIZADA) {
+        if (this.statusOperac == StatusOperacional.FINALIZADA ||
+                this.statusOperac == StatusOperacional.AGUARDANDO_APROVACAO) {
+
             throw new IllegalStateException(
-                    "Esta ordem de servico esta finalizada e nao pode ser alterada.");
+                    "Esta ordem de servico nao pode ser alterada neste status.");
         }
     }
 

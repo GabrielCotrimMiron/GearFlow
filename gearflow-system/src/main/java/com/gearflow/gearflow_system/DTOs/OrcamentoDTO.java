@@ -11,7 +11,9 @@ public record OrcamentoDTO(
         String status,
         String diagnostico,
         List<ItemOrcamentoDTO> itens,
-        BigDecimal valorTotal) {
+        BigDecimal valorTotal,
+        BigDecimal desconto,
+        BigDecimal valorFinal) {
 
     public OrcamentoDTO(OrdemServico ordem) {
         this(
@@ -23,7 +25,14 @@ public record OrcamentoDTO(
                 ordem.getItens().stream()
                         .map(ItemOrcamentoDTO::new)
                         .toList(),
-                calcularTotal(ordem));
+                calcularTotal(ordem),
+                ordem.getDesconto() == null
+                        ? BigDecimal.ZERO
+                        : ordem.getDesconto(),
+                calcularTotal(ordem).subtract(
+                        ordem.getDesconto() == null
+                                ? BigDecimal.ZERO
+                                : ordem.getDesconto()));
     }
 
     private static BigDecimal calcularTotal(OrdemServico ordem) {

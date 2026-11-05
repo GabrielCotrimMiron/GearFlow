@@ -74,6 +74,12 @@ const ATALHOS = [
     caminho: "/equipe",
     icone: "♙",
   },
+  {
+    titulo: "Gestão de Ordens de Serviço",
+    descricao: "Revisar orçamentos e fechar rascunhos",
+    caminho: "/ordens-servico",
+    icone: "▤",
+  },
 ];
 
 export default function Dashboard() {
