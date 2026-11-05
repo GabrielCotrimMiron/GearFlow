@@ -6,7 +6,7 @@ spring:
     add-properties: false
 
   datasource:
-    url: jdbc:mysql://localhost:3306/gearflow
+    url: jdbc:mysql://localhost:3306/gearflow_db
     username: root
     password: ${DB_PASSWORD}
 
