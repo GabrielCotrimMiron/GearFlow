@@ -28,7 +28,7 @@ public class PecaController {
             novaPeca.setQtdEstoque(0);
         }
         if (novaPeca.getQtd() == null) {
-            novaPeca.setQtd(0);
+            novaPeca.setQtd(1);
         }
         return ResponseEntity.ok(pecaRepository.save(novaPeca));
     }

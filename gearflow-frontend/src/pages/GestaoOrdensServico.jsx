@@ -13,6 +13,14 @@ export default function GestaoOrdensServico() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [osDetalhe, setOsDetalhe] = useState(null);
 
+    // NOVOS ESTADOS (RF07) - Catálogo e Adição de Itens
+    const [catalogoPecas, setCatalogoPecas] = useState([]);
+    const [catalogoServicos, setCatalogoServicos] = useState([]);
+    const [novoItemTipo, setNovoItemTipo] = useState('PECA'); // 'PECA' ou 'SERVICO'
+    const [novoItemId, setNovoItemId] = useState('');
+    const [novoItemQtd, setNovoItemQtd] = useState('1');
+    const [adicionandoItem, setAdicionandoItem] = useState(false);
+
     // RF09 - Fechamento de rascunho
     const [desconto, setDesconto] = useState('0');
     const [fechandoRascunho, setFechandoRascunho] = useState(false);
@@ -40,14 +48,18 @@ export default function GestaoOrdensServico() {
             try {
                 const autorizacao = gerarAutorizacaoBasica();
 
-                const [resOS, resVeic, resFunc] = await Promise.all([
+                const [resOS, resVeic, resFunc, resPecas, resServicos] = await Promise.all([
                     api.get('/ordens-servico', {
-                        headers: {
-                            Authorization: autorizacao
-                        }
+                        headers: { Authorization: autorizacao }
                     }),
                     api.get('/veiculos'),
-                    api.get('/funcionarios')
+                    api.get('/funcionarios'),
+                    api.get('/pecas', {
+                        headers: { Authorization: autorizacao }
+                    }),
+                    api.get('/servicos', {
+                        headers: { Authorization: autorizacao }
+                    })
                 ]);
 
                 if (!ativo) return;
@@ -62,7 +74,9 @@ export default function GestaoOrdensServico() {
 
                 setFuncionarios(
                     Array.isArray(resFunc.data) ? resFunc.data : []
-                );
+                )
+                setCatalogoPecas(Array.isArray(resPecas.data) ? resPecas.data : []);
+                setCatalogoServicos(Array.isArray(resServicos.data) ? resServicos.data : []);
 
                 setErroCarregamento('');
 
@@ -411,6 +425,60 @@ export default function GestaoOrdensServico() {
         }
     };
 
+    // RF07 - Adicionar Peça ou Serviço
+    const handleAdicionarItem = async () => {
+        if (!osDetalhe || !novoItemId || adicionandoItem) return;
+
+        setAdicionandoItem(true);
+        setErroFechamento('');
+
+        try {
+            const payload = {
+                itemId: parseInt(novoItemId, 10),
+                quantidade: parseInt(novoItemQtd, 10) || 1
+            };
+
+            await api.post(`/ordens-servico/${osDetalhe.id}/itens`, payload, {
+                headers: { Authorization: gerarAutorizacaoBasica() }
+            });
+
+            await carregarDados();
+
+            const resPecas = await api.get('/pecas', { headers: { Authorization: gerarAutorizacaoBasica() } });
+            setCatalogoPecas(Array.isArray(resPecas.data) ? resPecas.data : []);
+
+            // ==========================================
+            // 2. ADICIONE ESTAS LINHAS AQUI PARA ATUALIZAR O MODAL:
+            // Busca a OS recém-atualizada e injeta no modal
+            const autorizacao = gerarAutorizacaoBasica();
+            const resOS = await api.get('/ordens-servico', { headers: { Authorization: autorizacao } });
+
+            // Encontra a mesma OS, mas agora com os dados novos do banco
+            const osAtualizada = resOS.data.find(os => os.id === osDetalhe.id);
+            if (osAtualizada) {
+                setOsDetalhe(osAtualizada);
+            }
+            // ==========================================
+
+            // Limpa a seleção e recarrega para ver o valor atualizado e o stock abatido
+            setNovoItemId('');
+            setNovoItemQtd('1');
+            await carregarDados();
+
+            // Opcional: Atualizar o osDetalhe atual com os dados recém-carregados
+            // se tiveres uma rota de GET específico, ou pedir ao utilizador para reabrir.
+
+            alert("Item adicionado com sucesso!");
+
+        } catch (error) {
+            console.error('Erro ao adicionar item:', error);
+            const msg = error.response?.data?.message || 'Não foi possível adicionar o item. Verifique o stock.';
+            setErroFechamento(msg); // Usamos o mesmo estado de erro para simplificar o ecrã
+        } finally {
+            setAdicionandoItem(false);
+        }
+    };
+
     return (
         <div>
             <div className="equipe-header-actions">
@@ -705,6 +773,86 @@ export default function GestaoOrdensServico() {
                                 </p>
                             </div>
                         </div>
+
+                    {/* NOVO PAINEL DE ITENS (RF07) */}
+                    <div className="gf-os-section">
+                        <h3 className="gf-os-section-title">Itens e Serviços Aplicados</h3>
+                        {/* Lista de itens atuais */}
+                        {osDetalhe.itens && osDetalhe.itens.length > 0 ? (
+                            <ul style={{ listStyle: 'none', padding: 0, marginBottom: '15px' }}>
+                                {osDetalhe.itens.map((item, index) => (
+                                    <li key={index} style={{ padding: '8px', borderBottom: '1px solid #eee', fontSize: '0.85rem' }}>
+                                        <span style={{ fontWeight: 'bold' }}>{item.quantidade}x</span> {item.descricao} - {formatarMoeda(item.subtotal)}
+                                        {/* Se quiseres mostrar o valor unitário: {formatarMoeda(item.valorUnitario)} */}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '15px' }}>Nenhum item adicionado a esta OS ainda.</p>
+                        )}
+
+
+                        {/* Formulário de Adição (Apenas se não estiver bloqueada) */}
+                        {podeFecharRascunho && (
+                            <div style={{ background: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                                    <select
+                                        className="form-input"
+                                        value={novoItemTipo}
+                                        onChange={(e) => {
+                                            setNovoItemTipo(e.target.value);
+                                            setNovoItemId('');
+                                        }}
+                                    >
+                                        <option value="PECA">Adicionar Peça</option>
+                                        <option value="SERVICO">Adicionar Serviço</option>
+                                    </select>
+
+                                    <select
+                                        className="form-input"
+                                        style={{ flex: 1 }}
+                                        value={novoItemId}
+                                        onChange={(e) => setNovoItemId(e.target.value)}
+                                    >
+                                        <option value="">Selecione...</option>
+                                        {novoItemTipo === 'PECA'
+                                            ? catalogoPecas.map(p => (
+                                                <option key={p.id} value={p.id} disabled={p.qtdEstoque <= 0}>
+                                                    {p.descricao} (qtd: {p.qtdEstoque}) - {formatarMoeda(p.valorUni)}
+                                                </option>
+                                            ))
+                                            : catalogoServicos.map(s => (
+                                                <option key={s.id} value={s.id}>
+                                                    {s.descricao} - {formatarMoeda(s.valorUni)}
+                                                </option>
+                                            ))
+                                        }
+                                    </select>
+
+                                    <input
+                                        type="number"
+                                        className="form-input"
+                                        style={{ width: '80px' }}
+                                        min="1"
+                                        value={novoItemQtd}
+                                        onChange={(e) => setNovoItemQtd(e.target.value)}
+                                        disabled={novoItemTipo === 'SERVICO'} // Serviços costumam ser qtd 1
+                                    />
+                                </div>
+
+                                <button
+                                    className="btn-primary"
+                                    style={{ width: '100%', padding: '10px' }}
+                                    onClick={handleAdicionarItem}
+                                    disabled={!novoItemId || adicionandoItem}
+                                >
+                                    {adicionandoItem ? 'A Adicionar...' : '+ Incluir no Orçamento'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* PAINEL FINANCEIRO RF09 AQUI... */}
 
                         {/* PAINEL FINANCEIRO RF09 */}
                         <div className="gf-orcamento">

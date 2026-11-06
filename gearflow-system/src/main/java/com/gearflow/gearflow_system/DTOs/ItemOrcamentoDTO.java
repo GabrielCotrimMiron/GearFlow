@@ -28,14 +28,13 @@ public record ItemOrcamentoDTO(
     }
 
     private static String identificarTipo(ItemOS item) {
-        if (item instanceof Peca) {
+        Object real = org.hibernate.Hibernate.unproxy(item);
+        if (real instanceof Peca) {
             return "PECA";
         }
-
-        if (item instanceof Servico) {
+        if (real instanceof Servico) {
             return "SERVICO";
         }
-
         return "OUTRO";
     }
 

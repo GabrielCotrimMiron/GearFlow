@@ -6,7 +6,6 @@ import RegistroCliente from "./pages/RegistroCliente";
 import DashboardCliente from "./pages/DashboardCliente.jsx";
 import GestaoPecas from "./pages/GestaoPecas.jsx";
 import Servicos from "./pages/Servicos.jsx";
-import FilaPrioridade from "./pages/FilaPrioridade.jsx";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import GestaoOrdensServico from "./pages/GestaoOrdensServico.jsx";
 
@@ -55,15 +54,6 @@ function App() {
               subtitulo="Definição de preços fixos de mão de obra e tempos estimados"
             >
               <Servicos />
-            </DashboardLayout>
-          }
-        />
-
-        <Route
-          path="/fila-prioridade"
-          element={
-            <DashboardLayout titulo="Fila de Prioridade">
-              <FilaPrioridade />
             </DashboardLayout>
           }
         />

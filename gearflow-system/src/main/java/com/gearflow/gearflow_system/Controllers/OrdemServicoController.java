@@ -2,7 +2,6 @@
 package com.gearflow.gearflow_system.Controllers;
 
 import com.gearflow.gearflow_system.DTOs.AcompanhamentoDTO;
-import com.gearflow.gearflow_system.DTOs.FilaPrioridadeDTO;
 import com.gearflow.gearflow_system.DTOs.OrcamentoDTO;
 import com.gearflow.gearflow_system.DTOs.OrdemServicoGestaoDTO;
 import com.gearflow.gearflow_system.DTOs.OrdemServicoResumoDTO;
@@ -39,6 +38,25 @@ public class OrdemServicoController {
             String obsDiag
     ) {}
 
+    // DTO para receber os dados da requisição
+    public record AdicionarItemDTO(
+            Integer itemId,
+            Integer quantidade
+    ) {}
+
+    // Novo Endpoint para o RF07
+    @PostMapping("/{id}/itens")
+    @ResponseStatus(HttpStatus.OK)
+    public void adicionarItemNaOS(
+            @PathVariable Integer id,
+            @RequestBody AdicionarItemDTO request) {
+
+        // Passamos sempre a quantidade, se for serviço pode ser 1 por padrão
+        Integer qtde = request.quantidade() != null ? request.quantidade() : 1;
+
+        ordemServicoService.adicionarItem(id, request.itemId(), qtde);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public OrdemServicoGestaoDTO criarOrdemServico(
@@ -56,11 +74,6 @@ public class OrdemServicoController {
         return new OrdemServicoGestaoDTO(ordem);
     }
 
-    // RF05 - Consultar fila de prioridade
-    @GetMapping("/fila-prioridade")
-    public List<FilaPrioridadeDTO> listarFilaPrioridade() {
-        return ordemServicoService.listarFilaPrioridade();
-    }
 
     // RF05 - Alterar prioridade de uma OS
     @PutMapping("/{id}/prioridade")
