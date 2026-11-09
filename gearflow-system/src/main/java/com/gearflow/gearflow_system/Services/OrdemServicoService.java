@@ -2,27 +2,23 @@
 package com.gearflow.gearflow_system.Services;
 
 import com.gearflow.gearflow_system.DTOs.AcompanhamentoDTO;
-import com.gearflow.gearflow_system.DTOs.FilaPrioridadeDTO;
 import com.gearflow.gearflow_system.DTOs.OrcamentoDTO;
 import com.gearflow.gearflow_system.DTOs.OrdemServicoResumoDTO;
 import com.gearflow.gearflow_system.DTOs.OrdemServicoGestaoDTO;
 
-import com.gearflow.gearflow_system.Models.Cliente;
-import com.gearflow.gearflow_system.Models.Funcionario;
-import com.gearflow.gearflow_system.Models.OrdemServico;
-import com.gearflow.gearflow_system.Models.PrioridadeOS;
-import com.gearflow.gearflow_system.Models.StatusOperacional;
-import com.gearflow.gearflow_system.Models.Veiculo;
+import com.gearflow.gearflow_system.Models.*;
 
 import com.gearflow.gearflow_system.Repositories.OrdemServicoRepository;
 import com.gearflow.gearflow_system.Repositories.VeiculoRepository;
 import com.gearflow.gearflow_system.Repositories.FuncionarioRepository;
+import com.gearflow.gearflow_system.Repositories.ItemOSRepository;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.hibernate.Hibernate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,14 +27,16 @@ import java.util.List;
 @Service
 public class OrdemServicoService {
 
+    private final ItemOSRepository itemOSRepository;
     private final OrdemServicoRepository ordemServicoRepository;
     private final VeiculoRepository veiculoRepository;
     private final FuncionarioRepository funcionarioRepository;
 
     public OrdemServicoService(
-            OrdemServicoRepository ordemServicoRepository,
+            ItemOSRepository itemOSRepository, OrdemServicoRepository ordemServicoRepository,
             VeiculoRepository veiculoRepository,
             FuncionarioRepository funcionarioRepository) {
+        this.itemOSRepository = itemOSRepository;
 
         this.ordemServicoRepository = ordemServicoRepository;
         this.veiculoRepository = veiculoRepository;
@@ -99,15 +97,6 @@ public class OrdemServicoService {
         return ordemServicoRepository.save(ordem);
     }
 
-    // RF05 - Fila de prioridade
-    @Transactional(readOnly = true)
-    public List<FilaPrioridadeDTO> listarFilaPrioridade() {
-
-        return ordemServicoRepository.listarFilaPrioridade()
-                .stream()
-                .map(FilaPrioridadeDTO::new)
-                .toList();
-    }
 
     // RF05 - Alterar prioridade
     @Transactional
@@ -135,6 +124,90 @@ public class OrdemServicoService {
         ordemServicoRepository.save(ordem);
     }
 
+    @Transactional
+    public void adicionarItem(Integer osId, Integer itemId, Integer quantidade) {
+        if (quantidade == null || quantidade <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "A quantidade deve ser maior que zero.");
+        }
+
+        OrdemServico ordem = ordemServicoRepository.findById(osId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Ordem de serviço não encontrada"));
+
+        ItemOS itemProxy = itemOSRepository.findById(itemId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Item não encontrado no catálogo"));
+
+        // Desmascara o proxy para identificar a subclasse real do catálogo
+        ItemOS itemCatalogo = (ItemOS) Hibernate.unproxy(itemProxy);
+
+        // 1. Se for Peça: valida, abate o estoque no item do catálogo e salva
+        if (itemCatalogo instanceof Peca pecaCatalogo) {
+            try {
+                pecaCatalogo.abaterEstoque(quantidade);
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+            }
+            itemOSRepository.save(pecaCatalogo);
+
+            // Verifica se já existe essa peça nesta OS para somar a quantidade
+            Peca pecaExistenteNaOS = ordem.getItens().stream()
+                    .map(i -> (ItemOS) Hibernate.unproxy(i))
+                    .filter(Peca.class::isInstance)
+                    .map(Peca.class::cast)
+                    .filter(p -> p.getDescricao() != null
+                            && p.getDescricao().equalsIgnoreCase(pecaCatalogo.getDescricao()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (pecaExistenteNaOS != null) {
+                int qtdAtual = pecaExistenteNaOS.getQtd() != null ? pecaExistenteNaOS.getQtd() : 0;
+                pecaExistenteNaOS.setQtd(qtdAtual + quantidade);
+                itemOSRepository.save(pecaExistenteNaOS);
+            } else {
+                // Cria um clone independente para vincular à OS
+                Peca novaPecaOS = new Peca();
+                novaPecaOS.setDescricao(pecaCatalogo.getDescricao());
+                novaPecaOS.setValorUni(pecaCatalogo.getValorUni());
+                novaPecaOS.setCodFabri(pecaCatalogo.getCodFabri());
+                novaPecaOS.setQtdEstoque(0);
+                novaPecaOS.setQtd(quantidade);
+
+                ordem.adicionarItem(novaPecaOS);
+                itemOSRepository.save(novaPecaOS);
+            }
+
+        } else if (itemCatalogo instanceof Servico servicoCatalogo) {
+            // 2. Se for Serviço: verifica se já existe nesta OS ou cria um clone
+            Servico servicoExistenteNaOS = ordem.getItens().stream()
+                    .map(i -> (ItemOS) Hibernate.unproxy(i))
+                    .filter(Servico.class::isInstance)
+                    .map(Servico.class::cast)
+                    .filter(s -> s.getDescricao() != null
+                            && s.getDescricao().equalsIgnoreCase(servicoCatalogo.getDescricao()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (servicoExistenteNaOS != null) {
+                int qtdAtual = servicoExistenteNaOS.getQtd() != null ? servicoExistenteNaOS.getQtd() : 0;
+                servicoExistenteNaOS.setQtd(qtdAtual + quantidade);
+                itemOSRepository.save(servicoExistenteNaOS);
+            } else {
+                Servico novoServicoOS = new Servico();
+                novoServicoOS.setDescricao(servicoCatalogo.getDescricao());
+                novoServicoOS.setValorUni(servicoCatalogo.getValorUni());
+                novoServicoOS.setTempoEstim(servicoCatalogo.getTempoEstim());
+                novoServicoOS.setCategoria(servicoCatalogo.getCategoria());
+                novoServicoOS.setQtd(quantidade);
+
+                ordem.adicionarItem(novoServicoOS);
+                itemOSRepository.save(novoServicoOS);
+            }
+        }
+
+        ordemServicoRepository.save(ordem);
+    }
     // RF12 - Acompanhamento da OS
     @Transactional(readOnly = true)
     public AcompanhamentoDTO buscarAcompanhamento(

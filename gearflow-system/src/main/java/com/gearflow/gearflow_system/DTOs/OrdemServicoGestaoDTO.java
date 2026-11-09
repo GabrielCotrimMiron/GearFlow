@@ -3,6 +3,7 @@ package com.gearflow.gearflow_system.DTOs;
 
 import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.gearflow.gearflow_system.Models.OrdemServico;
 
@@ -18,7 +19,8 @@ public record OrdemServicoGestaoDTO(
         FuncionarioResumo mecanResp,
         BigDecimal valorTotal,
         BigDecimal desconto,
-        BigDecimal valorFinal) {
+        BigDecimal valorFinal,
+        List<ItemOrcamentoDTO> itens){
 
     public record VeiculoResumo(
             Integer id,
@@ -58,6 +60,10 @@ public record OrdemServicoGestaoDTO(
                 BigDecimal.valueOf(os.calcularTotal()),
                 os.getDesconto() == null
                         ? BigDecimal.ZERO : os.getDesconto(),
-                os.calcularTotalComDesconto());
+                os.calcularTotalComDesconto(),
+                // MAPEAMENTO DA LISTA DE ITENS AQUI:
+                os.getItens() == null
+                        ? List.of()
+                        : os.getItens().stream().map(ItemOrcamentoDTO::new).toList());
     }
 }

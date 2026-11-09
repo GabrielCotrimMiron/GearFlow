@@ -39,11 +39,6 @@ export default function DashboardLayout({
         { rota: "/pecas", texto: "Gestão de Peças", icone: "pecas" },
         { rota: "/servicos", texto: "Catálogo de Serviços", icone: "servicos" },
         {
-          rota: "/fila-prioridade",
-          texto: "Fila de Prioridades",
-          icone: "prioridade",
-        },
-        {
           rota: "/ordens-servico",
           texto: "Gestão de Ordens de Serviço",
           icone: "gestaoOS",
