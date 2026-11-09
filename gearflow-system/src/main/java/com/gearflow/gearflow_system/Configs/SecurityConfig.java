@@ -24,99 +24,122 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class SecurityConfig {
 
-        @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity http)
-                        throws Exception {
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+            throws Exception {
 
-                return http
-                                .cors(Customizer.withDefaults())
-                                .csrf(csrf -> csrf.disable())
-                                .authorizeHttpRequests(auth -> auth
-                                        
-                                                // Listagem geral das ordens de servico
-                                                // Acesso restrito aos funcionarios
-                                                .requestMatchers(
-                                                                HttpMethod.GET,
-                                                                "/ordens-servico")
-                                                .hasRole("FUNCIONARIO")
+        return http
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
 
-                                                // RF05 - Somente funcionarios
-                                                .requestMatchers(
-                                                                HttpMethod.GET,
-                                                                "/ordens-servico/fila-prioridade")
-                                                .hasRole("FUNCIONARIO")
+                        // Permitir preflight CORS
+                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                        .permitAll()
 
-                                                // RF05 - Somente funcionarios podem alterar prioridades
-                                                .requestMatchers(
-                                                                HttpMethod.PUT,
-                                                                "/ordens-servico/*/prioridade")
-                                                .hasRole("FUNCIONARIO")
+                        // Listagem geral das ordens de servico
+                        // Acesso restrito aos funcionarios
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/ordens-servico")
+                        .hasRole("FUNCIONARIO")
 
-                                                // RF09 - Fechamento de rascunho
-                                                // Acesso restrito a funcionarios
-                                                .requestMatchers(
-                                                                HttpMethod.PUT,
-                                                                "/ordens-servico/*/fechar-rascunho")
-                                                .hasRole("FUNCIONARIO")
+                        // RF05 - Somente funcionarios
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/ordens-servico/fila-prioridade")
+                        .hasRole("FUNCIONARIO")
 
-                                                // RF12 e RF13 - Cliente autenticado
-                                                .requestMatchers(
-                                                                HttpMethod.GET,
-                                                                "/ordens-servico/minhas",
-                                                                "/ordens-servico/*/acompanhamento",
-                                                                "/ordens-servico/*/orcamento")
-                                                .authenticated()
+                        // RF05 - Alteracao de prioridades
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/ordens-servico/*/prioridade")
+                        .hasRole("FUNCIONARIO")
 
-                                                .anyRequest().permitAll())
-                                .httpBasic(Customizer.withDefaults())
-                                .build();
-        }
+                        // RF09 - Fechamento de rascunho
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/ordens-servico/*/fechar-rascunho")
+                        .hasRole("FUNCIONARIO")
 
-        @Bean
-        public CorsConfigurationSource corsConfigurationSource() {
-                CorsConfiguration config = new CorsConfiguration();
+                        // RF12 e RF13 - Cliente autenticado
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/ordens-servico/minhas",
+                                "/ordens-servico/*/acompanhamento",
+                                "/ordens-servico/*/orcamento")
+                        .authenticated()
 
-                config.setAllowedOrigins(
-                                List.of("http://localhost:5173", "http://localhost:5174"));
+                        // RF14 - Aprovacao ou rejeicao de orcamento
+                        // Somente clientes autenticados
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/ordens-servico/*/aprovar",
+                                "/ordens-servico/*/rejeitar")
+                        .hasRole("USER")
 
-                config.setAllowedMethods(
-                                List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                        .anyRequest().permitAll())
+                .httpBasic(Customizer.withDefaults())
+                .build();
+    }
 
-                config.setAllowedHeaders(
-                                List.of("Authorization", "Content-Type", "Accept"));
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
 
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        config.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://127.0.0.1:5173",
+                "http://127.0.0.1:5174"
+        ));
 
-                source.registerCorsConfiguration("/**", config);
+        config.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS"
+        ));
 
-                return source;
-        }
+        config.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "Accept"
+        ));
 
-        @Bean
-        public UserDetailsService userDetailsService(
-                        UsuarioRepository usuarios) {
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
 
-                return email -> {
-                        var usuario = usuarios.findByEmail(email)
-                                        .orElseThrow(() -> new UsernameNotFoundException(
-                                                        "Usuario nao encontrado"));
+        source.registerCorsConfiguration("/**", config);
 
-                        // Cliente continua com o perfil USER
-                        String perfil = usuario instanceof Cliente
-                                        ? "USER"
-                                        : "FUNCIONARIO";
+        return source;
+    }
 
-                        return User.withUsername(usuario.getEmail())
-                                        .password(usuario.getSenha())
-                                        .roles(perfil)
-                                        .build();
-                };
-        }
+    @Bean
+    public UserDetailsService userDetailsService(
+            UsuarioRepository usuarios) {
 
-        // Temporario para testes locais.
-        @Bean
-        @SuppressWarnings("deprecation")
-        public PasswordEncoder passwordEncoder() {
-                return NoOpPasswordEncoder.getInstance();
-        }
+        return email -> {
+            var usuario = usuarios.findByEmail(email)
+                    .orElseThrow(() -> new UsernameNotFoundException(
+                            "Usuario nao encontrado"));
+
+            String perfil = usuario instanceof Cliente
+                    ? "USER"
+                    : "FUNCIONARIO";
+
+            return User.withUsername(usuario.getEmail())
+                    .password(usuario.getSenha())
+                    .roles(perfil)
+                    .build();
+        };
+    }
+
+    // Temporario para testes locais.
+    @Bean
+    @SuppressWarnings("deprecation")
+    public PasswordEncoder passwordEncoder() {
+        return NoOpPasswordEncoder.getInstance();
+    }
 }

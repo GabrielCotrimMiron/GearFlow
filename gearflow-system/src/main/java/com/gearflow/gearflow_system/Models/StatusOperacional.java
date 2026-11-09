@@ -5,5 +5,6 @@ public enum StatusOperacional {
     EM_ANALISE,
     AGUARDANDO_APROVACAO,
     EM_EXECUCAO,
-    FINALIZADA
+    FINALIZADA,
+    ORCAMENTO_REJEITADO
 }

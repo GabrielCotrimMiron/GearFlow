@@ -19,7 +19,7 @@ public class PecaController {
 
     @GetMapping
     public List<Peca> listarTodas() {
-        return pecaRepository.findAll();
+        return pecaRepository.buscarCatalogo();
     }
 
     @PostMapping

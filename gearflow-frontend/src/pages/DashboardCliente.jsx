@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +8,7 @@ import {
   obterCredenciais,
 } from "../services/clienteAuth";
 import "./DashboardCliente.css";
+import "./DashboardClienteRF14.css";
 
 function formatarMoeda(valor) {
   return Number(valor ?? 0).toLocaleString("pt-BR", {
@@ -21,14 +21,15 @@ function formatarData(data) {
   if (!data) return "Não informada";
   const texto = String(data).split("T")[0];
   const partes = texto.split("-");
-  return partes.length === 3
-    ? `${partes[2]}/${partes[1]}/${partes[0]}`
-    : texto;
+  return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : texto;
 }
 
 function formatarStatus(status) {
   const nomes = {
     ABERTA: "Aberta",
+    EM_ANALISE: "Em análise",
+    AGUARDANDO_APROVACAO: "Aguardando sua aprovação",
+    ORCAMENTO_REJEITADO: "Orçamento rejeitado",
     PENDENTE: "Pendente",
     AGUARDANDO: "Aguardando",
     EM_EXECUCAO: "Em execução",
@@ -36,14 +37,17 @@ function formatarStatus(status) {
     CANCELADA: "Cancelada",
   };
 
-  return nomes[status] ||
-    String(status || "Não informado").replaceAll("_", " ");
+  return (
+    nomes[status] || String(status || "Não informado").replaceAll("_", " ")
+  );
 }
 
 function classeStatus(status) {
   if (status === "FINALIZADA") return "finalizada";
   if (status === "EM_EXECUCAO") return "execucao";
-  if (status === "CANCELADA") return "cancelada";
+  if (status === "CANCELADA" || status === "ORCAMENTO_REJEITADO")
+    return "cancelada";
+  if (status === "AGUARDANDO_APROVACAO") return "aprovacao";
   return "pendente";
 }
 
@@ -62,13 +66,20 @@ function ModalOrcamento({
   carregando,
   erro,
   onClose,
+  onDecisao,
+  processandoDecisao,
+  erroDecisao,
 }) {
+  const [confirmacao, setConfirmacao] = useState(null);
   useEffect(() => {
     const overflowAnterior = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     function fecharComEscape(evento) {
-      if (evento.key === "Escape") onClose();
+      if (evento.key === "Escape" && !processandoDecisao) {
+        if (confirmacao) setConfirmacao(null);
+        else onClose();
+      }
     }
 
     document.addEventListener("keydown", fecharComEscape);
@@ -77,17 +88,18 @@ function ModalOrcamento({
       document.body.style.overflow = overflowAnterior;
       document.removeEventListener("keydown", fecharComEscape);
     };
-  }, [onClose]);
+  }, [onClose, confirmacao, processandoDecisao]);
 
-  const itens = Array.isArray(orcamento?.itens)
-    ? orcamento.itens
-    : [];
+  const itens = Array.isArray(orcamento?.itens) ? orcamento.itens : [];
+
+  const aguardandoAprovacao = orcamento?.status === "AGUARDANDO_APROVACAO";
 
   return createPortal(
     <div
       className="cliente-modal-overlay"
       onMouseDown={(evento) => {
-        if (evento.target === evento.currentTarget) onClose();
+        if (evento.target === evento.currentTarget && !processandoDecisao)
+          onClose();
       }}
     >
       <section
@@ -98,12 +110,8 @@ function ModalOrcamento({
       >
         <header className="cliente-modal-header">
           <div>
-            <span className="cliente-eyebrow">
-              GEARFLOW / ÁREA DO CLIENTE
-            </span>
-            <h2 id="cliente-orcamento-titulo">
-              Orçamento #{ordem.id}
-            </h2>
+            <span className="cliente-eyebrow">GEARFLOW / ÁREA DO CLIENTE</span>
+            <h2 id="cliente-orcamento-titulo">Orçamento #{ordem.id}</h2>
             <p>Detalhamento da ordem de serviço</p>
           </div>
 
@@ -111,6 +119,7 @@ function ModalOrcamento({
             type="button"
             className="cliente-modal-fechar"
             onClick={onClose}
+            disabled={processandoDecisao}
             aria-label="Fechar orçamento"
           >
             ×
@@ -124,15 +133,11 @@ function ModalOrcamento({
               <div>
                 <span className="cliente-campo-label">VEÍCULO</span>
                 <strong>{ordem.veiculo || "Não informado"}</strong>
-                <small>
-                  Placa: {ordem.placa || "Não informada"}
-                </small>
+                <small>Placa: {ordem.placa || "Não informada"}</small>
               </div>
             </div>
 
-            <EtiquetaStatus
-              status={orcamento?.status || ordem.status}
-            />
+            <EtiquetaStatus status={orcamento?.status || ordem.status} />
           </div>
 
           {carregando && (
@@ -159,8 +164,7 @@ function ModalOrcamento({
                 </div>
 
                 <p className="cliente-diagnostico">
-                  {orcamento.diagnostico ||
-                    "Nenhum diagnóstico informado."}
+                  {orcamento.diagnostico || "Nenhum diagnóstico informado."}
                 </p>
               </section>
 
@@ -211,28 +215,138 @@ function ModalOrcamento({
                 )}
               </section>
 
-              <div className="cliente-orcamento-total">
-                <div>
-                  <span>VALOR TOTAL DO ORÇAMENTO</span>
-                  <small>Soma dos itens cadastrados</small>
+              <section
+                className="rf14-resumo"
+                aria-label="Resumo financeiro do orçamento"
+              >
+                <div className="rf14-resumo-linha">
+                  <span>Subtotal dos itens</span>
+                  <strong>{formatarMoeda(orcamento.valorTotal)}</strong>
                 </div>
-                <strong>
-                  {formatarMoeda(orcamento.valorTotal)}
-                </strong>
-              </div>
+                <div className="rf14-resumo-linha rf14-desconto">
+                  <span>Desconto aplicado</span>
+                  <strong>− {formatarMoeda(orcamento.desconto)}</strong>
+                </div>
+                <div className="rf14-resumo-total">
+                  <div>
+                    <span>VALOR FINAL DO ORÇAMENTO</span>
+                    <small>Valor a ser aprovado para execução</small>
+                  </div>
+                  <strong>{formatarMoeda(orcamento.valorFinal)}</strong>
+                </div>
+              </section>
+
+              {aguardandoAprovacao && (
+                <section
+                  className="rf14-decisao"
+                  aria-label="Decisão sobre o orçamento"
+                >
+                  <div className="rf14-decisao-cabecalho">
+                    <span className="rf14-decisao-icone" aria-hidden="true">
+                      ✓
+                    </span>
+                    <div>
+                      <h3>Sua autorização é necessária</h3>
+                      <p>
+                        Revise os itens e o valor final antes de decidir. A
+                        oficina só poderá iniciar a execução após sua aprovação.
+                      </p>
+                    </div>
+                  </div>
+                  {erroDecisao && (
+                    <p className="rf14-erro" role="alert">
+                      {erroDecisao}
+                    </p>
+                  )}
+                  {confirmacao ? (
+                    <div
+                      className="rf14-confirmacao"
+                      role="group"
+                      aria-label="Confirmar decisão"
+                    >
+                      <strong>
+                        {confirmacao === "aprovar"
+                          ? "Confirmar aprovação?"
+                          : "Confirmar rejeição?"}
+                      </strong>
+                      <p>
+                        {confirmacao === "aprovar"
+                          ? "Você autoriza a execução dos serviços pelo valor final informado."
+                          : "A oficina será informada de que você não autorizou este orçamento."}
+                      </p>
+                      <div className="rf14-acoes">
+                        <button
+                          type="button"
+                          className="rf14-botao rf14-botao-neutro"
+                          disabled={processandoDecisao}
+                          onClick={() => setConfirmacao(null)}
+                        >
+                          Voltar
+                        </button>
+                        <button
+                          type="button"
+                          className={`rf14-botao ${confirmacao === "aprovar" ? "rf14-botao-aprovar" : "rf14-botao-rejeitar"}`}
+                          disabled={processandoDecisao}
+                          onClick={() => onDecisao(confirmacao)}
+                        >
+                          {processandoDecisao
+                            ? "Enviando decisão..."
+                            : confirmacao === "aprovar"
+                              ? "Confirmar aprovação"
+                              : "Confirmar rejeição"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rf14-acoes">
+                      <button
+                        type="button"
+                        className="rf14-botao rf14-botao-rejeitar"
+                        onClick={() => setConfirmacao("rejeitar")}
+                      >
+                        Rejeitar orçamento
+                      </button>
+                      <button
+                        type="button"
+                        className="rf14-botao rf14-botao-aprovar"
+                        onClick={() => setConfirmacao("aprovar")}
+                      >
+                        ✓ Aprovar orçamento
+                      </button>
+                    </div>
+                  )}
+                </section>
+              )}
+              {orcamento.status === "EM_EXECUCAO" && (
+                <div
+                  className="rf14-resultado rf14-resultado-aprovado"
+                  role="status"
+                >
+                  ✓ Orçamento aprovado. Serviço autorizado para execução.
+                </div>
+              )}
+              {orcamento.status === "ORCAMENTO_REJEITADO" && (
+                <div
+                  className="rf14-resultado rf14-resultado-rejeitado"
+                  role="status"
+                >
+                  Orçamento rejeitado. Nenhum serviço foi autorizado por esta
+                  decisão.
+                </div>
+              )}
             </>
           )}
         </div>
 
         <footer className="cliente-modal-footer">
           <span>
-            OS #{ordem.id} · Entrada em{" "}
-            {formatarData(ordem.dataEntrada)}
+            OS #{ordem.id} · Entrada em {formatarData(ordem.dataEntrada)}
           </span>
           <button
             type="button"
             className="cliente-btn cliente-btn-secundario"
             onClick={onClose}
+            disabled={processandoDecisao}
           >
             Fechar
           </button>
@@ -254,9 +368,10 @@ export default function DashboardCliente() {
 
   const [ordemSelecionada, setOrdemSelecionada] = useState(null);
   const [orcamento, setOrcamento] = useState(null);
-  const [carregandoOrcamento, setCarregandoOrcamento] =
-    useState(false);
+  const [carregandoOrcamento, setCarregandoOrcamento] = useState(false);
   const [erroOrcamento, setErroOrcamento] = useState("");
+  const [processandoDecisao, setProcessandoDecisao] = useState(false);
+  const [erroDecisao, setErroDecisao] = useState("");
 
   const requisicaoOrcamento = useRef(0);
 
@@ -270,19 +385,14 @@ export default function DashboardCliente() {
 
     async function buscarOrdens() {
       try {
-        const response = await api.get(
-          "/ordens-servico/minhas",
-          {
-            headers: {
-              Authorization: gerarAutorizacaoBasica(),
-            },
+        const response = await api.get("/ordens-servico/minhas", {
+          headers: {
+            Authorization: gerarAutorizacaoBasica(),
           },
-        );
+        });
 
         if (ativo) {
-          setOrdens(
-            Array.isArray(response.data) ? response.data : [],
-          );
+          setOrdens(Array.isArray(response.data) ? response.data : []);
         }
       } catch (error) {
         console.error("Erro ao carregar ordens:", error);
@@ -312,18 +422,13 @@ export default function DashboardCliente() {
     setErro("");
 
     try {
-      const response = await api.get(
-        "/ordens-servico/minhas",
-        {
-          headers: {
-            Authorization: gerarAutorizacaoBasica(),
-          },
+      const response = await api.get("/ordens-servico/minhas", {
+        headers: {
+          Authorization: gerarAutorizacaoBasica(),
         },
-      );
+      });
 
-      setOrdens(
-        Array.isArray(response.data) ? response.data : [],
-      );
+      setOrdens(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error(error);
       setErro("Não foi possível atualizar suas ordens.");
@@ -337,6 +442,7 @@ export default function DashboardCliente() {
     setOrdemSelecionada(null);
     setOrcamento(null);
     setErroOrcamento("");
+    setErroDecisao("");
     setCarregandoOrcamento(false);
   }, []);
 
@@ -346,17 +452,15 @@ export default function DashboardCliente() {
     setOrdemSelecionada(ordem);
     setOrcamento(null);
     setErroOrcamento("");
+    setErroDecisao("");
     setCarregandoOrcamento(true);
 
     try {
-      const response = await api.get(
-        `/ordens-servico/${ordem.id}/orcamento`,
-        {
-          headers: {
-            Authorization: gerarAutorizacaoBasica(),
-          },
+      const response = await api.get(`/ordens-servico/${ordem.id}/orcamento`, {
+        headers: {
+          Authorization: gerarAutorizacaoBasica(),
         },
-      );
+      });
 
       if (identificador === requisicaoOrcamento.current) {
         setOrcamento(response.data);
@@ -365,9 +469,7 @@ export default function DashboardCliente() {
       console.error("Erro ao carregar orçamento:", error);
 
       if (identificador === requisicaoOrcamento.current) {
-        setErroOrcamento(
-          `Erro ${error.response?.status || error.message}`,
-        );
+        setErroOrcamento(`Erro ${error.response?.status || error.message}`);
       }
     } finally {
       if (identificador === requisicaoOrcamento.current) {
@@ -376,8 +478,65 @@ export default function DashboardCliente() {
     }
   }
 
+  async function decidirOrcamento(decisao) {
+    if (
+      !ordemSelecionada ||
+      processandoDecisao ||
+      orcamento?.status !== "AGUARDANDO_APROVACAO"
+    )
+      return;
+
+    const id = ordemSelecionada.id;
+    const identificador = requisicaoOrcamento.current;
+    setProcessandoDecisao(true);
+    setErroDecisao("");
+
+    try {
+      await api.put(`/ordens-servico/${id}/${decisao}`, null, {
+        headers: { Authorization: gerarAutorizacaoBasica() },
+      });
+
+      // Recarrega os dados do servidor; não presume que a transição ocorreu localmente.
+      const [respostaOrcamento, respostaOrdens] = await Promise.all([
+        api.get(`/ordens-servico/${id}/orcamento`, {
+          headers: { Authorization: gerarAutorizacaoBasica() },
+        }),
+        api.get("/ordens-servico/minhas", {
+          headers: { Authorization: gerarAutorizacaoBasica() },
+        }),
+      ]);
+
+      if (identificador === requisicaoOrcamento.current) {
+        setOrcamento(respostaOrcamento.data);
+        setOrdens(
+          Array.isArray(respostaOrdens.data) ? respostaOrdens.data : [],
+        );
+        setOrdemSelecionada((anterior) =>
+          anterior?.id === id
+            ? { ...anterior, status: respostaOrcamento.data.status }
+            : anterior,
+        );
+      }
+    } catch (error) {
+      console.error("Erro ao processar decisão:", error);
+      if (identificador === requisicaoOrcamento.current) {
+        setErroDecisao(
+          error.response?.status === 409
+            ? "Este orçamento não está mais disponível para decisão. Atualize a página."
+            : `Não foi possível registrar sua decisão (${error.response?.status || error.message}).`,
+        );
+      }
+    } finally {
+      setProcessandoDecisao(false);
+    }
+  }
+
   const emAndamento = ordens.filter(
     (ordem) => ordem.status === "EM_EXECUCAO",
+  ).length;
+
+  const aguardando = ordens.filter(
+    (ordem) => ordem.status === "AGUARDANDO_APROVACAO",
   ).length;
 
   const finalizadas = ordens.filter(
@@ -387,8 +546,7 @@ export default function DashboardCliente() {
   const ordensFiltradas = ordens.filter((ordem) => {
     if (filtro === "TODAS") return true;
     if (filtro === "ANDAMENTO") {
-      return ordem.status !== "FINALIZADA" &&
-        ordem.status !== "CANCELADA";
+      return ordem.status !== "FINALIZADA" && ordem.status !== "CANCELADA";
     }
     return ordem.status === filtro;
   });
@@ -402,13 +560,11 @@ export default function DashboardCliente() {
       <div className="cliente-pagina">
         <section className="cliente-boas-vindas">
           <div>
-            <span className="cliente-eyebrow">
-              ÁREA EXCLUSIVA DO CLIENTE
-            </span>
+            <span className="cliente-eyebrow">ÁREA EXCLUSIVA DO CLIENTE</span>
             <h2>Seu veículo, sempre acompanhado.</h2>
             <p>
-              Consulte suas ordens de serviço, acompanhe o andamento
-              dos reparos e visualize seus orçamentos em um só lugar.
+              Consulte suas ordens de serviço, acompanhe o andamento dos reparos
+              e visualize seus orçamentos em um só lugar.
             </p>
           </div>
           <span className="cliente-boas-vindas-icone" aria-hidden="true">
@@ -442,13 +598,37 @@ export default function DashboardCliente() {
           </div>
         </section>
 
+        <section
+          className="rf14-pendencias"
+          aria-label="Orçamentos pendentes de aprovação"
+        >
+          <div className="rf14-pendencias-icone" aria-hidden="true">
+            ◷
+          </div>
+          <div>
+            <strong>
+              {carregando
+                ? "Verificando orçamentos..."
+                : aguardando === 0
+                  ? "Nenhuma aprovação pendente"
+                  : `${aguardando} ${aguardando === 1 ? "orçamento aguarda" : "orçamentos aguardam"} sua decisão`}
+            </strong>
+            <p>
+              {aguardando > 0
+                ? "Abra o orçamento correspondente para revisar e autorizar os serviços."
+                : "Quando a oficina enviar um orçamento, você poderá avaliá-lo aqui."}
+            </p>
+          </div>
+          {aguardando > 0 && (
+            <span className="rf14-pendencias-numero">{aguardando}</span>
+          )}
+        </section>
+
         <section className="cliente-ordens-secao">
           <div className="cliente-ordens-header">
             <div>
               <h3>Minhas ordens de serviço</h3>
-              <p>
-                Acompanhe as informações dos seus atendimentos.
-              </p>
+              <p>Acompanhe as informações dos seus atendimentos.</p>
             </div>
 
             <button
@@ -470,9 +650,7 @@ export default function DashboardCliente() {
               <button
                 key={valor}
                 type="button"
-                className={`cliente-filtro ${
-                  filtro === valor ? "ativo" : ""
-                }`}
+                className={`cliente-filtro ${filtro === valor ? "ativo" : ""}`}
                 onClick={() => setFiltro(valor)}
               >
                 {rotulo}
@@ -505,14 +683,9 @@ export default function DashboardCliente() {
           ) : (
             <div className="cliente-ordens-grid">
               {ordensFiltradas.map((ordem) => (
-                <article
-                  className="cliente-ordem-card"
-                  key={ordem.id}
-                >
+                <article className="cliente-ordem-card" key={ordem.id}>
                   <div className="cliente-ordem-topo">
-                    <span className="cliente-ordem-numero">
-                      OS #{ordem.id}
-                    </span>
+                    <span className="cliente-ordem-numero">OS #{ordem.id}</span>
                     <EtiquetaStatus status={ordem.status} />
                   </div>
 
@@ -522,17 +695,13 @@ export default function DashboardCliente() {
                       <strong>
                         {ordem.veiculo || "Veículo não informado"}
                       </strong>
-                      <span>
-                        Placa: {ordem.placa || "Não informada"}
-                      </span>
+                      <span>Placa: {ordem.placa || "Não informada"}</span>
                     </div>
                   </div>
 
                   <div className="cliente-ordem-data">
                     <span>Data de entrada</span>
-                    <strong>
-                      {formatarData(ordem.dataEntrada)}
-                    </strong>
+                    <strong>{formatarData(ordem.dataEntrada)}</strong>
                   </div>
 
                   <button
@@ -558,6 +727,9 @@ export default function DashboardCliente() {
           carregando={carregandoOrcamento}
           erro={erroOrcamento}
           onClose={fecharOrcamento}
+          onDecisao={decidirOrcamento}
+          processandoDecisao={processandoDecisao}
+          erroDecisao={erroDecisao}
         />
       )}
     </DashboardLayout>
