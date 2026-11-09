@@ -1,8 +1,12 @@
+
 package com.gearflow.gearflow_system;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.math.BigDecimal;
+
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.gearflow.gearflow_system.Models.OrdemServico;
 import com.gearflow.gearflow_system.Models.StatusOperacional;
@@ -10,11 +14,19 @@ import com.gearflow.gearflow_system.Models.Peca;
 
 public class ImutabilidadeOrdemServicoTest {
 
+    private void definirStatus(
+            OrdemServico os,
+            StatusOperacional status) {
+
+        ReflectionTestUtils.setField(
+                os, "statusOperac", status);
+    }
+
     @Test
     void naoDeveAlterarOSFinalizada() {
         OrdemServico os = new OrdemServico();
 
-        os.setStatusOperac(StatusOperacional.FINALIZADA);
+        definirStatus(os, StatusOperacional.FINALIZADA);
 
         assertThrows(IllegalStateException.class, () -> {
             os.setObsDiag("Diagnostico alterado");
@@ -25,7 +37,7 @@ public class ImutabilidadeOrdemServicoTest {
     void naoDeveAdicionarItemEmOSFinalizada() {
         OrdemServico os = new OrdemServico();
 
-        os.setStatusOperac(StatusOperacional.FINALIZADA);
+        definirStatus(os, StatusOperacional.FINALIZADA);
 
         Peca peca = new Peca();
 
@@ -38,7 +50,8 @@ public class ImutabilidadeOrdemServicoTest {
     void devePermitirAlterarOSEmAndamento() {
         OrdemServico os = new OrdemServico();
 
-        os.setStatusOperac(StatusOperacional.EM_EXECUCAO);
+        definirStatus(os, StatusOperacional.EM_EXECUCAO);
+
         os.setObsDiag("Manutencao em andamento");
 
         assertEquals(
@@ -52,10 +65,11 @@ public class ImutabilidadeOrdemServicoTest {
         Peca peca = new Peca();
 
         os.adicionarItem(peca);
-        os.setStatusOperac(StatusOperacional.FINALIZADA);
+
+        definirStatus(os, StatusOperacional.FINALIZADA);
 
         assertThrows(IllegalStateException.class, () -> {
-            peca.setValorUni(new java.math.BigDecimal("200.00"));
+            peca.setValorUni(new BigDecimal("200.00"));
         });
     }
 }
