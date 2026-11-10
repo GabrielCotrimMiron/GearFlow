@@ -1,0 +1,342 @@
+
+/* ============================================
+   GEARFLOW — RF14
+   Aprovação e Rejeição de Orçamentos
+
+   Complementa o DashboardCliente.css
+   ============================================ */
+
+/* Status aguardando aprovação */
+
+.cliente-status.aprovacao {
+  background: #fff5dc;
+  color: #9b6400;
+  border-color: #f1d38c;
+}
+
+/* Aviso de orçamentos pendentes */
+
+.rf14-pendencias {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 24px;
+  margin: 22px 0;
+  background: linear-gradient(110deg, #f6f9ff, #eef5ff);
+  border: 1px solid #dbe7fa;
+  border-radius: 18px;
+  color: #1d3553;
+  box-shadow: 0 8px 28px rgba(19, 56, 105, 0.04);
+}
+
+.rf14-pendencias-icone {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #dceaff;
+  color: #2056a2;
+  font-size: 27px;
+}
+
+.rf14-pendencias > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+.rf14-pendencias strong {
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+.rf14-pendencias p {
+  margin: 5px 0 0;
+  color: #5b6d85;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.rf14-pendencias-numero {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 12px;
+  background: #2056a2;
+  color: white;
+  font-weight: 750;
+}
+
+/* Resumo financeiro */
+
+.rf14-resumo {
+  overflow: hidden;
+  margin-top: 22px;
+  border: 1px solid #e2e9f1;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.rf14-resumo-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  color: #526278;
+  font-size: 14px;
+}
+
+.rf14-resumo-linha strong {
+  color: #1b2d44;
+  font-variant-numeric: tabular-nums;
+}
+
+.rf14-desconto {
+  border-top: 1px solid #e9edf4;
+}
+
+.rf14-desconto strong {
+  color: #16845e;
+}
+
+/* Total do orçamento */
+
+.rf14-resumo-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 22px 20px;
+  background: #142c4c;
+  color: white;
+}
+
+.rf14-resumo-total div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rf14-resumo-total span {
+  font-size: 11px;
+  letter-spacing: 0.11em;
+  font-weight: 750;
+}
+
+.rf14-resumo-total small {
+  color: #bfd0e7;
+  font-size: 12px;
+}
+
+.rf14-resumo-total strong {
+  font-size: clamp(21px, 3vw, 29px);
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Área de decisão */
+
+.rf14-decisao {
+  margin-top: 20px;
+  padding: 22px;
+  border: 1px solid #cbdcf3;
+  border-radius: 18px;
+  background: linear-gradient(140deg, #f8fbff, #eef5ff);
+}
+
+.rf14-decisao-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.rf14-decisao-icone {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #dceaff;
+  color: #2056a2;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.rf14-decisao h3 {
+  margin: 0 0 7px;
+  color: #183252;
+  font-size: 17px;
+  letter-spacing: -0.025em;
+}
+
+.rf14-decisao p {
+  margin: 0;
+  color: #576c84;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+/* Botões de ação */
+
+.rf14-acoes {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.rf14-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 11px 18px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
+}
+
+.rf14-botao:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(20, 44, 76, 0.12);
+}
+
+.rf14-botao:focus-visible {
+  outline: 3px solid #7baaff;
+  outline-offset: 3px;
+}
+
+.rf14-botao:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* Aprovar — verde */
+
+.rf14-botao-aprovar {
+  background: #16764f;
+  color: white;
+}
+
+.rf14-botao-aprovar:hover:not(:disabled) {
+  background: #0f6240;
+}
+
+/* Rejeitar — vermelho */
+
+.rf14-botao-rejeitar {
+  background: white;
+  color: #ad3843;
+  border-color: #edc4c9;
+}
+
+.rf14-botao-rejeitar:hover:not(:disabled) {
+  background: #fff4f5;
+}
+
+/* Cancelar confirmação */
+
+.rf14-botao-neutro {
+  background: #e5edf6;
+  color: #284665;
+}
+
+/* Confirmação antes de enviar */
+
+.rf14-confirmacao {
+  padding: 18px;
+  border-radius: 13px;
+  border: 1px solid #cbdcf3;
+  background: white;
+}
+
+.rf14-confirmacao > strong {
+  display: block;
+  margin-bottom: 7px;
+  color: #1c3554;
+  font-size: 15px;
+}
+
+.rf14-confirmacao .rf14-acoes {
+  margin-top: 16px;
+}
+
+/* Mensagens de erro */
+
+.rf14-erro {
+  margin: 0 0 16px !important;
+  padding: 12px 14px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 10px;
+  color: #a11b34 !important;
+}
+
+/* Resultado da decisão */
+
+.rf14-resultado {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: 13px;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.rf14-resultado-aprovado {
+  color: #176344;
+  background: #e9f8ef;
+  border: 1px solid #b9e7c9;
+}
+
+.rf14-resultado-rejeitado {
+  color: #9a303b;
+  background: #fff0f1;
+  border: 1px solid #f4c6cb;
+}
+
+/* Responsividade */
+
+@media (max-width: 620px) {
+  .rf14-pendencias {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .rf14-pendencias-icone {
+    width: 40px;
+    height: 40px;
+  }
+
+  .rf14-resumo-total {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .rf14-decisao {
+    padding: 16px;
+  }
+
+  .rf14-acoes {
+    flex-direction: column-reverse;
+  }
+
+  .rf14-botao {
+    width: 100%;
+  }
+}

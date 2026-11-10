@@ -20,7 +20,7 @@ public class ServicoController {
 
     @GetMapping
     public List<Servico> listarTodos() {
-        return servicoRepository.findAll();
+        return servicoRepository.buscarCatalogo();
     }
 
     @PostMapping

@@ -14,6 +14,7 @@ const icones = {
   servicos: "☷",
   prioridade: "⚑",
   gestaoOS: "▤",
+  financeiro: "◈",
 };
 
 export default function DashboardLayout({
@@ -49,6 +50,11 @@ export default function DashboardLayout({
           rota: "/ordens-servico",
           texto: "Gestão de Ordens de Serviço",
           icone: "gestaoOS",
+        },
+        {
+          rota: "/financeiro",
+          texto: "Dashboard Financeira",
+          icone: "financeiro",
         },
         { rota: "/agendamentos", texto: "Agendamentos", icone: "agendamento" },
       ];

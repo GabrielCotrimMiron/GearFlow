@@ -32,7 +32,11 @@ public class SecurityConfig {
                                 .cors(Customizer.withDefaults())
                                 .csrf(csrf -> csrf.disable())
                                 .authorizeHttpRequests(auth -> auth
-                                        
+
+                                                // Permitir preflight CORS
+                                                .requestMatchers(HttpMethod.OPTIONS, "/**")
+                                                .permitAll()
+
                                                 // Listagem geral das ordens de servico
                                                 // Acesso restrito aos funcionarios
                                                 .requestMatchers(
@@ -46,14 +50,13 @@ public class SecurityConfig {
                                                                 "/ordens-servico/fila-prioridade")
                                                 .hasRole("FUNCIONARIO")
 
-                                                // RF05 - Somente funcionarios podem alterar prioridades
+                                                // RF05 - Alteracao de prioridades
                                                 .requestMatchers(
                                                                 HttpMethod.PUT,
                                                                 "/ordens-servico/*/prioridade")
                                                 .hasRole("FUNCIONARIO")
 
                                                 // RF09 - Fechamento de rascunho
-                                                // Acesso restrito a funcionarios
                                                 .requestMatchers(
                                                                 HttpMethod.PUT,
                                                                 "/ordens-servico/*/fechar-rascunho")
@@ -67,6 +70,20 @@ public class SecurityConfig {
                                                                 "/ordens-servico/*/orcamento")
                                                 .authenticated()
 
+                                                // RF14 - Aprovacao ou rejeicao de orcamento
+                                                // Somente clientes autenticados
+                                                .requestMatchers(
+                                                                HttpMethod.PUT,
+                                                                "/ordens-servico/*/aprovar",
+                                                                "/ordens-servico/*/rejeitar")
+                                                .hasRole("USER")
+
+                                                // RF04 - Dashboard Financeira
+                                                // Acesso restrito aos funcionarios autenticados
+                                                .requestMatchers(
+                                                                "/financeiro/**")
+                                                .hasRole("FUNCIONARIO")
+
                                                 .anyRequest().permitAll())
                                 .httpBasic(Customizer.withDefaults())
                                 .build();
@@ -76,14 +93,23 @@ public class SecurityConfig {
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration config = new CorsConfiguration();
 
-                config.setAllowedOrigins(
-                                List.of("http://localhost:5173", "http://localhost:5174"));
+                config.setAllowedOrigins(List.of(
+                                "http://localhost:5173",
+                                "http://localhost:5174",
+                                "http://127.0.0.1:5173",
+                                "http://127.0.0.1:5174"));
 
-                config.setAllowedMethods(
-                                List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                config.setAllowedMethods(List.of(
+                                "GET",
+                                "POST",
+                                "PUT",
+                                "DELETE",
+                                "OPTIONS"));
 
-                config.setAllowedHeaders(
-                                List.of("Authorization", "Content-Type", "Accept"));
+                config.setAllowedHeaders(List.of(
+                                "Authorization",
+                                "Content-Type",
+                                "Accept"));
 
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
@@ -101,7 +127,6 @@ public class SecurityConfig {
                                         .orElseThrow(() -> new UsernameNotFoundException(
                                                         "Usuario nao encontrado"));
 
-                        // Cliente continua com o perfil USER
                         String perfil = usuario instanceof Cliente
                                         ? "USER"
                                         : "FUNCIONARIO";

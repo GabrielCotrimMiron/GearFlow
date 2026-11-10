@@ -35,8 +35,8 @@ public class OrdemServicoController {
             LocalDate dataEntrada,
             LocalDate previsaoEntrega,
             PrioridadeOS prioridade,
-            String obsDiag
-    ) {}
+            String obsDiag) {
+    }
 
     // DTO para receber os dados da requisição
     public record AdicionarItemDTO(
@@ -68,8 +68,7 @@ public class OrdemServicoController {
                 request.dataEntrada(),
                 request.previsaoEntrega(),
                 request.prioridade(),
-                request.obsDiag()
-        );
+                request.obsDiag());
 
         return new OrdemServicoGestaoDTO(ordem);
     }
@@ -126,4 +125,25 @@ public class OrdemServicoController {
     public List<OrdemServicoGestaoDTO> listarOrdens() {
         return ordemServicoService.listarTodas();
     }
+
+    // RF14 - Cliente aprova o orcamento
+    @PutMapping("/{id}/aprovar")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void aprovarOrcamento(
+            @PathVariable Integer id,
+            Authentication authentication) {
+
+        ordemServicoService.aprovarOrcamento(id, authentication);
+    }
+
+    // RF14 - Cliente rejeita o orcamento
+    @PutMapping("/{id}/rejeitar")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void rejeitarOrcamento(
+            @PathVariable Integer id,
+            Authentication authentication) {
+
+        ordemServicoService.rejeitarOrcamento(id, authentication);
+    }
+
 }

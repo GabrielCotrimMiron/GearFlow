@@ -1,426 +1,548 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
 import { gerarAutorizacaoBasica } from "../services/clienteAuth";
 import "./Dashboard.css";
 
-function extrairLista(dados) {
-  if (Array.isArray(dados)) return dados;
-  return Array.isArray(dados?.content) ? dados.content : [];
-}
-
-function formatarMoeda(valor) {
-  return Number(valor ?? 0).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-}
-
-function formatarStatus(status) {
-  const nomes = {
-    EM_EXECUCAO: "Em execução",
-    FINALIZADA: "Finalizada",
-    ABERTA: "Aberta",
-    PENDENTE: "Pendente",
-    AGUARDANDO: "Aguardando",
-  };
-
-  return (
-    nomes[status] ||
-    String(status || "Não informado")
-      .replaceAll("_", " ")
-      .toLowerCase()
+const API = "http://localhost:8080";
+const MESES = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+];
+const moeda = (valor) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+    Number(valor) || 0,
   );
-}
-
-function formatarPrioridade(prioridade) {
-  const nomes = {
-    URGENTE: "Urgente",
-    ALTA: "Alta",
-    NORMAL: "Normal",
-  };
-
-  return nomes[prioridade] || "Normal";
-}
-
-const PESO_PRIORIDADE = {
-  URGENTE: 0,
-  ALTA: 1,
-  NORMAL: 2,
-};
-
-const ATALHOS = [
+const lista = (valor) =>
+  Array.isArray(valor)
+    ? valor
+    : Array.isArray(valor?.content)
+      ? valor.content
+      : [];
+const atalhos = [
   {
-    titulo: "Fila de prioridades",
-    descricao: "Acompanhar ordens e urgências",
-    caminho: "/fila-prioridade",
-    icone: "↗",
+    titulo: "Dashboard financeiro",
+    descricao: "Receitas, despesas e pagamentos",
+    caminho: "/financeiro",
+    icone: "◈",
+  },
+  {
+    titulo: "Ordens de serviço",
+    descricao: "Acompanhar atendimentos",
+    caminho: "/ordens-servico",
+    icone: "▤",
   },
   {
     titulo: "Gestão de peças",
-    descricao: "Consultar estoque e valores",
+    descricao: "Estoque e disponibilidade",
     caminho: "/pecas",
     icone: "▦",
   },
   {
     titulo: "Catálogo de serviços",
-    descricao: "Gerenciar serviços da oficina",
+    descricao: "Serviços oferecidos",
     caminho: "/servicos",
     icone: "⚙",
   },
   {
     titulo: "Gestão de equipe",
-    descricao: "Administrar colaboradores",
+    descricao: "Colaboradores da oficina",
     caminho: "/equipe",
     icone: "♙",
   },
-  {
-    titulo: "Gestão de Ordens de Serviço",
-    descricao: "Revisar orçamentos e fechar rascunhos",
-    caminho: "/ordens-servico",
-    icone: "▤",
-  },
 ];
+
+async function buscarFinanceiro(caminho, authorization) {
+  const resposta = await fetch(`${API}${caminho}`, {
+    headers: { Authorization: authorization },
+    cache: "no-store",
+  });
+  if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+  return resposta.json();
+}
+
+function Grafico({ historico, periodo }) {
+  const meses = useMemo(() => {
+    const agora = new Date();
+    const dados = Array.from({ length: periodo }, (_, i) => {
+      const data = new Date(
+        agora.getFullYear(),
+        agora.getMonth() - periodo + i + 1,
+        1,
+      );
+      return {
+        chave: `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}`,
+        rotulo: `${MESES[data.getMonth()]}/${String(data.getFullYear()).slice(2)}`,
+        pago: 0,
+        pendente: 0,
+      };
+    });
+    const porMes = new Map(dados.map((item) => [item.chave, item]));
+    historico.forEach((os) => {
+      const mes = porMes.get(os.dataEntrada?.slice(0, 7));
+      if (!mes) return;
+      const valor = Number(os.valor) || 0;
+      if (os.statusPagamento === "PAGO") mes.pago += valor;
+      if (os.statusPagamento === "PENDENTE") mes.pendente += valor;
+    });
+    return dados;
+  }, [historico, periodo]);
+  const maior = Math.max(1, ...meses.map((mes) => mes.pago + mes.pendente));
+  return (
+    <div
+      className="dashboard-grafico"
+      role="img"
+      aria-label="Valores pagos e pendentes por mês, agrupados pela data de entrada da ordem de serviço"
+    >
+      {meses.map((mes) => (
+        <div
+          className="dashboard-grafico-coluna"
+          key={mes.chave}
+          title={`${mes.rotulo}: pago ${moeda(mes.pago)}; pendente ${moeda(mes.pendente)}`}
+        >
+          <div className="dashboard-grafico-barras">
+            <span
+              className="dashboard-barra-pago"
+              style={{ height: `${(mes.pago / maior) * 100}%` }}
+            />
+            <span
+              className="dashboard-barra-pendente"
+              style={{ height: `${(mes.pendente / maior) * 100}%` }}
+            />
+          </div>
+          <small>{mes.rotulo}</small>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const [dados, setDados] = useState({
-    ordens: [],
+    historico: [],
+    resultado: null,
+    despesas: [],
     pecas: [],
     servicos: [],
     funcionarios: [],
   });
-
+  const [falhas, setFalhas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
-  const [erros, setErros] = useState([]);
+  const [atualizadoEm, setAtualizadoEm] = useState(null);
+  const [periodo, setPeriodo] = useState(6);
 
-  async function carregarDados(atualizacao = false) {
-    if (atualizacao) {
-      setAtualizando(true);
-    } else {
-      setCarregando(true);
+  const carregarDados = useCallback(async (atualizacao = false) => {
+    if (atualizacao) setAtualizando(true);
+    else setCarregando(true);
+    const authorization = gerarAutorizacaoBasica();
+    if (!authorization) {
+      setFalhas(["Sessão não encontrada. Faça login novamente."]);
+      setCarregando(false);
+      setAtualizando(false);
+      return;
     }
-
-    const autorizacao = gerarAutorizacaoBasica();
-
-    const requisicoes = [
-      api.get("/ordens-servico/fila-prioridade", {
-        headers: {
-          Authorization: autorizacao,
-        },
-      }),
-      api.get("/pecas"),
-      api.get("/servicos"),
-      api.get("/funcionarios"),
+    const tarefas = [
+      [
+        "historico",
+        "Histórico financeiro",
+        () => buscarFinanceiro("/financeiro/historico", authorization),
+      ],
+      [
+        "resultado",
+        "Resultado financeiro",
+        () => buscarFinanceiro("/financeiro/resultado", authorization),
+      ],
+      [
+        "despesas",
+        "Despesas",
+        () => buscarFinanceiro("/financeiro/despesas", authorization),
+      ],
+      ["pecas", "Peças", () => api.get("/pecas").then((r) => r.data)],
+      ["servicos", "Serviços", () => api.get("/servicos").then((r) => r.data)],
+      [
+        "funcionarios",
+        "Colaboradores",
+        () => api.get("/funcionarios").then((r) => r.data),
+      ],
     ];
-
     try {
-      const resultados = await Promise.allSettled(requisicoes);
-
-      const nomes = ["ordens de serviço", "peças", "serviços", "funcionários"];
-
-      const chaves = ["ordens", "pecas", "servicos", "funcionarios"];
-
-      const novosErros = [];
-
-      setDados((anteriores) => {
-        const atualizados = { ...anteriores };
-
-        resultados.forEach((resultado, indice) => {
-          if (resultado.status === "fulfilled") {
-            atualizados[chaves[indice]] = extrairLista(resultado.value.data);
-          } else {
-            console.error(
-              `Erro ao carregar ${nomes[indice]}`,
-              resultado.reason,
-            );
-
-            novosErros.push(nomes[indice]);
-          }
-        });
-
-        return atualizados;
+      const resultados = await Promise.allSettled(tarefas.map((t) => t[2]()));
+      const erros = [];
+      const proximos = {};
+      resultados.forEach((r, i) => {
+        const [chave, titulo] = tarefas[i];
+        if (r.status === "fulfilled")
+          proximos[chave] = chave === "resultado" ? r.value : lista(r.value);
+        else {
+          erros.push(titulo);
+          console.error(`Erro ao consultar ${titulo}:`, r.reason);
+          proximos[chave] = chave === "resultado" ? null : [];
+        }
       });
-
-      setErros(novosErros);
+      setDados(proximos);
+      setFalhas(erros);
+      setAtualizadoEm(new Date());
     } finally {
       setCarregando(false);
       setAtualizando(false);
     }
-  }
-
-  useEffect(() => {
-    let ativo = true;
-
-    async function buscarDadosIniciais() {
-      const autorizacao = gerarAutorizacaoBasica();
-
-      const requisicoes = [
-        api.get("/ordens-servic", {
-          headers: {
-            Authorization: autorizacao,
-          },
-        }),
-        api.get("/pecas"),
-        api.get("/servicos"),
-        api.get("/funcionarios"),
-      ];
-
-      const resultados = await Promise.allSettled(requisicoes);
-
-      if (!ativo) return;
-
-      const nomes = ["ordens de serviço", "peças", "serviços", "funcionários"];
-
-      const chaves = ["ordens", "pecas", "servicos", "funcionarios"];
-
-      const novosDados = {
-        ordens: [],
-        pecas: [],
-        servicos: [],
-        funcionarios: [],
-      };
-
-      const novosErros = [];
-
-      resultados.forEach((resultado, indice) => {
-        if (resultado.status === "fulfilled") {
-          novosDados[chaves[indice]] = extrairLista(resultado.value.data);
-        } else {
-          console.error(`Erro ao carregar ${nomes[indice]}`, resultado.reason);
-
-          novosErros.push(nomes[indice]);
-        }
-      });
-
-      setDados(novosDados);
-      setErros(novosErros);
-      setCarregando(false);
-    }
-
-    buscarDadosIniciais();
-
-    return () => {
-      ativo = false;
-    };
   }, []);
 
-  const { ordens, pecas, servicos, funcionarios } = dados;
+  useEffect(() => {
+    const agendamento = setTimeout(() => {
+      void carregarDados();
+    }, 0);
 
-  const ordensEmExecucao = ordens.filter(
-    (ordem) => ordem.statusOperac === "EM_EXECUCAO",
-  ).length;
+    return () => clearTimeout(agendamento);
+  }, [carregarDados]);
 
-  const ordensFinalizadas = ordens.filter(
-    (ordem) => ordem.statusOperac === "FINALIZADA",
-  ).length;
-
-  const pecasEstoqueBaixo = pecas.filter(
-    (peca) => peca.estoqueBaixo ?? Number(peca.qtdEstoque ?? 0) <= 5,
-  ).length;
-
-  const valorEstoque = pecas.reduce(
-    (total, peca) =>
-      total + Number(peca.valorUni ?? 0) * Number(peca.qtdEstoque ?? 0),
+  const historico = dados.historico;
+  const recebido = Number(dados.resultado?.totalRecebido) || 0;
+  const despesasTotal = Number(dados.resultado?.totalDespesas) || 0;
+  const lucro = Number(dados.resultado?.lucroEstimado) || 0;
+  const pendentes = historico.filter((os) => os.statusPagamento === "PENDENTE");
+  const totalPendente = pendentes.reduce(
+    (s, os) => s + (Number(os.valor) || 0),
     0,
   );
+  const pagos = historico.filter((os) => os.statusPagamento === "PAGO").length;
+  const estornados = historico.filter(
+    (os) => os.statusPagamento === "ESTORNADO",
+  ).length;
+  const pecasBaixas = dados.pecas.filter(
+    (p) =>
+      p.estoqueBaixo === true ||
+      (p.estoqueBaixo == null && Number(p.qtdEstoque ?? 0) <= 5),
+  ).length;
+  const estoqueValor = dados.pecas.reduce(
+    (s, p) => s + (Number(p.valorUni) || 0) * (Number(p.qtdEstoque) || 0),
+    0,
+  );
+  const falhou = (nome) => falhas.includes(nome);
+  const valorOuTraco = (valor, erro) => (carregando || erro ? "—" : valor);
 
-  const ordensPrioritarias = [...ordens]
-    .filter((ordem) => ordem.statusOperac !== "FINALIZADA")
-    .sort((a, b) => {
-      const pesoA = PESO_PRIORIDADE[a.prioridade] ?? 3;
-      const pesoB = PESO_PRIORIDADE[b.prioridade] ?? 3;
-
-      if (pesoA !== pesoB) return pesoA - pesoB;
-
-      return Number(a.id ?? 0) - Number(b.id ?? 0);
-    })
-    .slice(0, 5);
-
-  const indicadores = [
+  const kpis = [
     {
-      titulo: "Ordens de serviço",
-      valor: ordens.length,
-      descricao: "Total na fila consultada",
-      icone: "▤",
-      cor: "azul",
-    },
-    {
-      titulo: "Em execução",
-      valor: ordensEmExecucao,
-      descricao: "Serviços em andamento",
+      nome: "Recebido",
+      valor: valorOuTraco(moeda(recebido), falhou("Resultado financeiro")),
+      descricao: "OS pagas · acumulado",
+      cor: "verde",
       icone: "↗",
-      cor: "verde",
     },
     {
-      titulo: "Finalizadas",
-      valor: ordensFinalizadas,
-      descricao: "Ordens concluídas na fila",
-      icone: "✓",
-      cor: "verde",
-    },
-    {
-      titulo: "Estoque baixo",
-      valor: pecasEstoqueBaixo,
-      descricao: "Peças que precisam de atenção",
-      icone: "!",
+      nome: "Despesas",
+      valor: valorOuTraco(moeda(despesasTotal), falhou("Resultado financeiro")),
+      descricao: "Despesas registradas · acumulado",
       cor: "laranja",
+      icone: "↘",
+    },
+    {
+      nome: "Lucro estimado",
+      valor: valorOuTraco(moeda(lucro), falhou("Resultado financeiro")),
+      descricao: "Recebido menos despesas",
+      cor: "azul",
+      icone: "◈",
+    },
+    {
+      nome: "A receber",
+      valor: valorOuTraco(moeda(totalPendente), falhou("Histórico financeiro")),
+      descricao: `${pendentes.length} OS finalizadas pendentes`,
+      cor: "roxo",
+      icone: "◷",
     },
   ];
 
   return (
     <div className="dashboard-pagina">
-      <div className="dashboard-introducao">
+      <header className="dashboard-introducao">
         <div>
-          <span className="dashboard-sobretitulo">PAINEL DE CONTROLE</span>
+          <span className="dashboard-sobretitulo">CENTRAL DE GESTÃO</span>
           <h2>Visão geral da oficina</h2>
           <p>
-            Acompanhe os principais indicadores e acesse rapidamente as áreas do
-            GearFlow.
+            Indicadores financeiros e operacionais para acompanhar seu negócio.
           </p>
         </div>
+        <div className="dashboard-acoes-topo">
+          <span className="dashboard-atualizacao">
+            {atualizadoEm
+              ? `Atualizado às ${atualizadoEm.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+              : "Aguardando dados"}
+          </span>
+          <button
+            className="dashboard-atualizar"
+            type="button"
+            onClick={() => carregarDados(true)}
+            disabled={carregando || atualizando}
+          >
+            <span aria-hidden="true">↻</span>{" "}
+            {atualizando ? "Atualizando..." : "Atualizar dados"}
+          </button>
+        </div>
+      </header>
 
-        <button
-          type="button"
-          className="dashboard-atualizar"
-          onClick={() => carregarDados(true)}
-          disabled={carregando || atualizando}
-        >
-          <span aria-hidden="true">↻</span>
-          {atualizando ? "Atualizando..." : "Atualizar dados"}
-        </button>
-      </div>
-
-      {erros.length > 0 && (
+      {falhas.length > 0 && (
         <div className="dashboard-aviso" role="alert">
-          Não foi possível consultar: {erros.join(", ")}. Os indicadores dessas
-          áreas podem estar incompletos.
+          Não foi possível atualizar: {falhas.join(", ")}. Os dados dessas áreas
+          estão indisponíveis.{" "}
+          <button type="button" onClick={() => carregarDados(true)}>
+            Tentar novamente
+          </button>
         </div>
       )}
 
-      <section className="dashboard-indicadores">
-        {indicadores.map((item) => (
-          <div key={item.titulo} className="dashboard-indicador">
+      <section
+        className="dashboard-indicadores"
+        aria-label="Indicadores financeiros"
+      >
+        {kpis.map((kpi) => (
+          <article
+            className={`dashboard-indicador dashboard-indicador-${kpi.cor}`}
+            key={kpi.nome}
+          >
             <div className="dashboard-indicador-topo">
-              <span className={`dashboard-indicador-icone ${item.cor}`}>
-                {item.icone}
+              <span className={`dashboard-indicador-icone ${kpi.cor}`}>
+                {kpi.icone}
               </span>
-              <span className="dashboard-indicador-label">{item.titulo}</span>
+              <span className="dashboard-indicador-label">{kpi.nome}</span>
             </div>
-
-            <strong className="dashboard-indicador-valor">
-              {carregando ? "—" : item.valor}
-            </strong>
-
+            <strong className="dashboard-indicador-valor">{kpi.valor}</strong>
             <span className="dashboard-indicador-descricao">
-              {item.descricao}
+              {kpi.descricao}
             </span>
-          </div>
+          </article>
         ))}
       </section>
 
       <div className="dashboard-conteudo">
-        <section className="dashboard-painel dashboard-fila">
+        <section className="dashboard-painel dashboard-painel-grafico">
           <div className="dashboard-painel-cabecalho">
             <div>
-              <h3>Fila de prioridades</h3>
-              <p>Ordens de serviço que precisam de atenção</p>
+              <span className="dashboard-mini-titulo">DESEMPENHO</span>
+              <h3>Evolução dos recebimentos</h3>
+              <p>Valores por data de entrada das OS finalizadas</p>
             </div>
-
-            <Link to="/fila-prioridade" className="dashboard-link">
-              Ver todas →
+            <select
+              aria-label="Período do gráfico"
+              className="dashboard-seletor"
+              value={periodo}
+              onChange={(e) => setPeriodo(Number(e.target.value))}
+            >
+              <option value={3}>3 meses</option>
+              <option value={6}>6 meses</option>
+              <option value={12}>12 meses</option>
+            </select>
+          </div>
+          {carregando ? (
+            <div className="dashboard-sem-dados">Carregando gráfico...</div>
+          ) : falhou("Histórico financeiro") ? (
+            <div className="dashboard-sem-dados">Histórico indisponível.</div>
+          ) : (
+            <>
+              <div className="dashboard-legenda">
+                <span>
+                  <i className="dashboard-legenda-pago" /> Pago
+                </span>
+                <span>
+                  <i className="dashboard-legenda-pendente" /> Pendente
+                </span>
+              </div>
+              <Grafico historico={historico} periodo={periodo} />
+            </>
+          )}
+          <div className="dashboard-painel-rodape">
+            <span>Não inclui valores estornados.</span>
+            <Link to="/financeiro" className="dashboard-link">
+              Ver painel financeiro →
             </Link>
           </div>
-
-          {carregando ? (
-            <div className="dashboard-sem-dados">Carregando ordens...</div>
-          ) : ordensPrioritarias.length === 0 ? (
-            <div className="dashboard-sem-dados">
-              Nenhuma ordem pendente encontrada.
-            </div>
-          ) : (
-            <div className="dashboard-lista-ordens">
-              {ordensPrioritarias.map((ordem, index) => (
-                <div key={ordem.id ?? index} className="dashboard-ordem">
-                  <div className="dashboard-ordem-identificacao">
-                    <span className="dashboard-ordem-icone">▤</span>
-                    <div>
-                      <strong>Ordem de Serviço #{ordem.id}</strong>
-                      <span>{formatarStatus(ordem.statusOperac)}</span>
-                    </div>
-                  </div>
-
-                  <span
-                    className={`dashboard-prioridade ${
-                      ordem.prioridade === "URGENTE"
-                        ? "urgente"
-                        : ordem.prioridade === "ALTA"
-                          ? "alta"
-                          : "normal"
-                    }`}
-                  >
-                    {formatarPrioridade(ordem.prioridade)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
         </section>
 
-        <section className="dashboard-painel dashboard-resumo">
+        <section className="dashboard-painel">
           <div className="dashboard-painel-cabecalho">
             <div>
-              <h3>Resumo da operação</h3>
-              <p>Informações gerais da oficina</p>
+              <span className="dashboard-mini-titulo">OPERAÇÃO</span>
+              <h3>Resumo da oficina</h3>
+              <p>Informações disponíveis no sistema</p>
             </div>
           </div>
-
           <div className="dashboard-resumo-lista">
             <div>
-              <span>Peças cadastradas</span>
-              <strong>{carregando ? "—" : pecas.length}</strong>
+              <span>OS finalizadas no histórico</span>
+              <strong>
+                {valorOuTraco(historico.length, falhou("Histórico financeiro"))}
+              </strong>
             </div>
             <div>
-              <span>Valor total em estoque</span>
-              <strong>{carregando ? "—" : formatarMoeda(valorEstoque)}</strong>
+              <span>OS finalizadas pagas</span>
+              <strong>
+                {valorOuTraco(pagos, falhou("Histórico financeiro"))}
+              </strong>
+            </div>
+            <div>
+              <span>OS finalizadas estornadas</span>
+              <strong>
+                {valorOuTraco(estornados, falhou("Histórico financeiro"))}
+              </strong>
+            </div>
+            <div>
+              <span>Peças cadastradas</span>
+              <strong>
+                {valorOuTraco(dados.pecas.length, falhou("Peças"))}
+              </strong>
+            </div>
+            <div>
+              <span>Peças com estoque baixo</span>
+              <strong className={pecasBaixas ? "dashboard-alerta-numero" : ""}>
+                {valorOuTraco(pecasBaixas, falhou("Peças"))}
+              </strong>
             </div>
             <div>
               <span>Serviços cadastrados</span>
-              <strong>{carregando ? "—" : servicos.length}</strong>
+              <strong>
+                {valorOuTraco(dados.servicos.length, falhou("Serviços"))}
+              </strong>
             </div>
             <div>
               <span>Colaboradores</span>
-              <strong>{carregando ? "—" : funcionarios.length}</strong>
+              <strong>
+                {valorOuTraco(
+                  dados.funcionarios.length,
+                  falhou("Colaboradores"),
+                )}
+              </strong>
             </div>
           </div>
+        </section>
+      </div>
+
+      <div className="dashboard-conteudo dashboard-conteudo-secundario">
+        <section className="dashboard-painel">
+          <div className="dashboard-painel-cabecalho">
+            <div>
+              <span className="dashboard-mini-titulo">MOVIMENTAÇÃO</span>
+              <h3>Últimas OS finalizadas</h3>
+              <p>Histórico de faturamento da oficina</p>
+            </div>
+            <Link to="/financeiro" className="dashboard-link">
+              Ver histórico →
+            </Link>
+          </div>
+          {carregando ? (
+            <div className="dashboard-sem-dados">Carregando ordens...</div>
+          ) : falhou("Histórico financeiro") ? (
+            <div className="dashboard-sem-dados">Histórico indisponível.</div>
+          ) : historico.length === 0 ? (
+            <div className="dashboard-sem-dados">
+              Nenhuma OS finalizada encontrada.
+            </div>
+          ) : (
+            <div className="dashboard-lista-ordens">
+              {[...historico]
+                .sort(
+                  (a, b) =>
+                    (b.dataEntrada || "").localeCompare(a.dataEntrada || "") ||
+                    Number(b.id) - Number(a.id),
+                )
+                .slice(0, 5)
+                .map((os) => (
+                  <div className="dashboard-ordem" key={os.id}>
+                    <div className="dashboard-ordem-identificacao">
+                      <span className="dashboard-ordem-icone">▤</span>
+                      <div>
+                        <strong>Ordem de Serviço #{os.id}</strong>
+                        <span>
+                          {os.dataEntrada
+                            ? os.dataEntrada.split("-").reverse().join("/")
+                            : "Data não informada"}{" "}
+                          · {moeda(os.valor)}
+                        </span>
+                      </div>
+                    </div>
+                    <span
+                      className={`dashboard-status dashboard-status-${(os.statusPagamento || "pendente").toLowerCase()}`}
+                    >
+                      {os.statusPagamento === "PAGO"
+                        ? "Pago"
+                        : os.statusPagamento === "ESTORNADO"
+                          ? "Estornado"
+                          : "Pendente"}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          )}
+        </section>
+        <section className="dashboard-painel">
+          <div className="dashboard-painel-cabecalho">
+            <div>
+              <span className="dashboard-mini-titulo">RECURSOS</span>
+              <h3>Estoque e despesas</h3>
+              <p>Panorama complementar</p>
+            </div>
+          </div>
+          <div className="dashboard-destaque-secundario">
+            <span>Valor estimado em estoque</span>
+            <strong>
+              {valorOuTraco(moeda(estoqueValor), falhou("Peças"))}
+            </strong>
+            <small>Preço de venda × quantidade disponível</small>
+          </div>
+          <div className="dashboard-resumo-lista">
+            <div>
+              <span>Despesas cadastradas</span>
+              <strong>
+                {valorOuTraco(dados.despesas.length, falhou("Despesas"))}
+              </strong>
+            </div>
+            <div>
+              <span>OS pendentes de pagamento</span>
+              <strong>
+                {valorOuTraco(pendentes.length, falhou("Histórico financeiro"))}
+              </strong>
+            </div>
+          </div>
+          <Link to="/pecas" className="dashboard-link dashboard-link-inferior">
+            Consultar estoque →
+          </Link>
         </section>
       </div>
 
       <section className="dashboard-atalhos-secao">
         <div className="dashboard-secao-titulo">
-          <h3>Acesso rápido</h3>
-          <p>Navegue pelas principais funcionalidades</p>
+          <div>
+            <span className="dashboard-mini-titulo">NAVEGAÇÃO</span>
+            <h3>Acesso rápido</h3>
+            <p>Gerencie as principais áreas da oficina</p>
+          </div>
         </div>
-
         <div className="dashboard-atalhos">
-          {ATALHOS.map((atalho) => (
-            <Link
-              to={atalho.caminho}
-              key={atalho.caminho}
-              className="dashboard-atalho"
-            >
-              <span className="dashboard-atalho-icone">{atalho.icone}</span>
-
+          {atalhos.map((a) => (
+            <Link className="dashboard-atalho" to={a.caminho} key={a.caminho}>
+              <span className="dashboard-atalho-icone">{a.icone}</span>
               <div>
-                <strong>{atalho.titulo}</strong>
-                <span>{atalho.descricao}</span>
+                <strong>{a.titulo}</strong>
+                <span>{a.descricao}</span>
               </div>
-
               <span className="dashboard-atalho-seta">→</span>
             </Link>
           ))}
         </div>
       </section>
+      <p className="dashboard-nota">
+        Indicadores financeiros acumulados. O lucro estimado não representa
+        lucro líquido contábil nem fluxo de caixa efetivo.
+      </p>
     </div>
   );
 }

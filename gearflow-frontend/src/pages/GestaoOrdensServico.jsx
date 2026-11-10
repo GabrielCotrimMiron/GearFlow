@@ -1,1196 +1,1217 @@
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import api from "../services/api";
+import { gerarAutorizacaoBasica } from "../services/clienteAuth";
+import "./GestaoOrdensServicoRF09.css";
 
-import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import api from '../services/api';
-import { gerarAutorizacaoBasica } from '../services/clienteAuth';
-import './GestaoOrdensServicoRF09.css';
+const moeda = (valor) =>
+  new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(Number(valor) || 0);
+
+const dataBR = (data) => {
+  if (!data) return "Não definida";
+  const [ano, mes, dia] = data.split("-");
+  return dia && mes && ano ? `${dia}/${mes}/${ano}` : data;
+};
+
+const nomesStatus = {
+  ABERTA: "Aberta",
+  EM_ANALISE: "Em análise",
+  AGUARDANDO_APROVACAO: "Aguardando aprovação",
+  EM_EXECUCAO: "Em execução",
+  FINALIZADA: "Finalizada",
+  ORCAMENTO_REJEITADO: "Orçamento rejeitado",
+};
+
+const nomeStatus = (status) => nomesStatus[status] || status || "Não informado";
+
+const hojeLocal = () => {
+  const agora = new Date();
+  const ano = agora.getFullYear();
+  const mes = String(agora.getMonth() + 1).padStart(2, "0");
+  const dia = String(agora.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+};
+
+const formularioInicial = () => ({
+  veiculoId: "",
+  funcionarioId: "",
+  dataEntrada: hojeLocal(),
+  previsaoEntrega: "",
+  prioridade: "NORMAL",
+  obsDiag: "",
+});
+
+const mensagemErro = (erro, alternativa) =>
+  erro.response?.data?.message || erro.response?.data?.detail || alternativa;
+
+function Aviso({ tipo = "erro", children }) {
+  if (!children) return null;
+
+  return (
+    <div
+      className={`gf-feedback gf-feedback-${tipo}`}
+      role={tipo === "erro" ? "alert" : "status"}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function GestaoOrdensServico() {
-    const [ordens, setOrdens] = useState([]);
-    const [veiculos, setVeiculos] = useState([]);
-    const [funcionarios, setFuncionarios] = useState([]);
-    const [termoBusca, setTermoBusca] = useState('');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [osDetalhe, setOsDetalhe] = useState(null);
+  const [ordens, setOrdens] = useState([]);
+  const [veiculos, setVeiculos] = useState([]);
+  const [funcionarios, setFuncionarios] = useState([]);
+  const [catalogoPecas, setCatalogoPecas] = useState([]);
+  const [catalogoServicos, setCatalogoServicos] = useState([]);
 
-    // NOVOS ESTADOS (RF07) - Catálogo e Adição de Itens
-    const [catalogoPecas, setCatalogoPecas] = useState([]);
-    const [catalogoServicos, setCatalogoServicos] = useState([]);
-    const [novoItemTipo, setNovoItemTipo] = useState('PECA'); // 'PECA' ou 'SERVICO'
-    const [novoItemId, setNovoItemId] = useState('');
-    const [novoItemQtd, setNovoItemQtd] = useState('1');
-    const [adicionandoItem, setAdicionandoItem] = useState(false);
+  const [busca, setBusca] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("TODOS");
+  const [carregando, setCarregando] = useState(true);
+  const [erroCarregamento, setErroCarregamento] = useState("");
 
-    // RF09 - Fechamento de rascunho
-    const [desconto, setDesconto] = useState('0');
-    const [fechandoRascunho, setFechandoRascunho] = useState(false);
-    const [erroFechamento, setErroFechamento] = useState('');
-    const [sucessoFechamento, setSucessoFechamento] = useState('');
-    const [erroCarregamento, setErroCarregamento] = useState('');
-    const [carregando, setCarregando] = useState(true);
+  const [osDetalhe, setOsDetalhe] = useState(null);
+  const [modalNovaOS, setModalNovaOS] = useState(false);
+  const [formData, setFormData] = useState(formularioInicial);
 
-    const hoje = new Date().toISOString().split('T')[0];
+  const [novoItemTipo, setNovoItemTipo] = useState("PECA");
+  const [novoItemId, setNovoItemId] = useState("");
+  const [novoItemQtd, setNovoItemQtd] = useState("1");
+  const [adicionandoItem, setAdicionandoItem] = useState(false);
+  const [feedbackItem, setFeedbackItem] = useState(null);
 
-    const [formData, setFormData] = useState({
-        veiculoId: '',
-        funcionarioId: '',
-        dataEntrada: hoje,
-        previsaoEntrega: '',
-        prioridade: 'NORMAL',
-        obsDiag: ''
-    });
+  const [desconto, setDesconto] = useState("0");
+  const [fechandoRascunho, setFechandoRascunho] = useState(false);
+  const [feedbackOrcamento, setFeedbackOrcamento] = useState(null);
 
-    // Carregamento inicial com autenticacao
-    useEffect(() => {
-        let ativo = true;
+  const [salvandoOS, setSalvandoOS] = useState(false);
+  const [feedbackNovaOS, setFeedbackNovaOS] = useState("");
+  const [alterandoPrioridade, setAlterandoPrioridade] = useState(null);
 
-        async function buscarDadosIniciais() {
-            try {
-                const autorizacao = gerarAutorizacaoBasica();
+  const auth = () => ({
+    Authorization: gerarAutorizacaoBasica(),
+  });
 
-                const [resOS, resVeic, resFunc, resPecas, resServicos] = await Promise.all([
-                    api.get('/ordens-servico', {
-                        headers: { Authorization: autorizacao }
-                    }),
-                    api.get('/veiculos'),
-                    api.get('/funcionarios'),
-                    api.get('/pecas', {
-                        headers: { Authorization: autorizacao }
-                    }),
-                    api.get('/servicos', {
-                        headers: { Authorization: autorizacao }
-                    })
-                ]);
+  const carregarDados = async (inicial = false) => {
+    if (inicial) setCarregando(true);
 
-                if (!ativo) return;
+    try {
+      const [resOS, resVeic, resFunc, resPecas, resServicos] =
+        await Promise.all([
+          api.get("/ordens-servico", { headers: auth() }),
+          api.get("/veiculos"),
+          api.get("/funcionarios"),
+          api.get("/pecas", { headers: auth() }),
+          api.get("/servicos", { headers: auth() }),
+        ]);
 
-                setOrdens(
-                    Array.isArray(resOS.data) ? resOS.data : []
-                );
+      const novasOrdens = Array.isArray(resOS.data) ? resOS.data : [];
 
-                setVeiculos(
-                    Array.isArray(resVeic.data) ? resVeic.data : []
-                );
+      setOrdens(novasOrdens);
+      setVeiculos(Array.isArray(resVeic.data) ? resVeic.data : []);
+      setFuncionarios(Array.isArray(resFunc.data) ? resFunc.data : []);
+      setCatalogoPecas(Array.isArray(resPecas.data) ? resPecas.data : []);
+      setCatalogoServicos(
+        Array.isArray(resServicos.data) ? resServicos.data : [],
+      );
 
-                setFuncionarios(
-                    Array.isArray(resFunc.data) ? resFunc.data : []
-                )
-                setCatalogoPecas(Array.isArray(resPecas.data) ? resPecas.data : []);
-                setCatalogoServicos(Array.isArray(resServicos.data) ? resServicos.data : []);
+      setOsDetalhe((anterior) => {
+        if (!anterior) return null;
+        return novasOrdens.find((os) => os.id === anterior.id) || anterior;
+      });
 
-                setErroCarregamento('');
+      setErroCarregamento("");
+      return novasOrdens;
+    } catch (erro) {
+      console.error("Erro ao carregar gestão de OS:", erro);
 
-            } catch (error) {
-                if (!ativo) return;
+      setErroCarregamento(
+        erro.response?.status === 401
+          ? "Sessão não autorizada. Verifique as credenciais."
+          : erro.response?.status === 403
+            ? "Seu usuário não tem permissão para consultar as ordens."
+            : "Não foi possível carregar os dados. Verifique o servidor.",
+      );
 
-                console.error(
-                    'Erro ao carregar ordens de servico:',
-                    error
-                );
+      return null;
+    } finally {
+      if (inicial) setCarregando(false);
+    }
+  };
 
-                setErroCarregamento(
-                    error.response?.status === 401
-                        ? 'Sessão não autorizada. Verifique as credenciais do funcionário.'
-                        : error.response?.status === 403
-                            ? 'Seu usuário não possui permissão para consultar as ordens.'
-                            : 'Não foi possível carregar os dados. Verifique a conexão com o servidor.'
-                );
-
-            } finally {
-                if (ativo) {
-                    setCarregando(false);
-                }
-            }
-        }
-
-        buscarDadosIniciais();
-
-        return () => {
-            ativo = false;
-        };
-    }, []);
-
-    // Atualiza a listagem apos operacoes
-    const carregarDados = async () => {
-        try {
-            const autorizacao = gerarAutorizacaoBasica();
-
-            const [resOS, resVeic, resFunc] = await Promise.all([
-                api.get('/ordens-servico', {
-                    headers: {
-                        Authorization: autorizacao
-                    }
-                }),
-                api.get('/veiculos'),
-                api.get('/funcionarios')
-            ]);
-
-            setOrdens(
-                Array.isArray(resOS.data) ? resOS.data : []
-            );
-
-            setVeiculos(
-                Array.isArray(resVeic.data) ? resVeic.data : []
-            );
-
-            setFuncionarios(
-                Array.isArray(resFunc.data) ? resFunc.data : []
-            );
-
-            setErroCarregamento('');
-
-        } catch (error) {
-            console.error('Erro ao atualizar dados:', error);
-
-            setErroCarregamento(
-                'Não foi possível atualizar as ordens de serviço.'
-            );
-        }
+  useEffect(() => {
+    const iniciarCarregamento = async () => {
+      await carregarDados(true);
     };
 
-    const abrirModalNovaOS = () => {
-        setFormData({
-            veiculoId: '',
-            funcionarioId: '',
-            dataEntrada: hoje,
-            previsaoEntrega: '',
-            prioridade: 'NORMAL',
-            obsDiag: ''
-        });
+    iniciarCarregamento();
+  }, []);
+  const abrirDetalhes = (os) => {
+    setOsDetalhe(os);
+    setNovoItemTipo("PECA");
+    setNovoItemId("");
+    setNovoItemQtd("1");
+    setDesconto(String(os.desconto ?? 0));
+    setFeedbackItem(null);
+    setFeedbackOrcamento(null);
+  };
 
-        setIsModalOpen(true);
-    };
+  const ocupado = adicionandoItem || fechandoRascunho;
 
-    const abrirDetalhesOS = (os) => {
-        setOsDetalhe(os);
-        setDesconto(String(os.desconto ?? 0));
-        setErroFechamento('');
-        setSucessoFechamento('');
-    };
+  const fecharDetalhes = () => {
+    if (ocupado) return;
+    setOsDetalhe(null);
+  };
 
-    const fecharDetalhesOS = () => {
-        if (fechandoRascunho) return;
+  const abrirNovaOS = () => {
+    setFormData(formularioInicial());
+    setFeedbackNovaOS("");
+    setModalNovaOS(true);
+  };
 
-        setOsDetalhe(null);
-        setErroFechamento('');
-        setSucessoFechamento('');
-    };
+  const criarOS = async (evento) => {
+    evento.preventDefault();
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
-    };
+    if (salvandoOS) return;
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    if (formData.previsaoEntrega < formData.dataEntrada) {
+      setFeedbackNovaOS(
+        "A previsão de entrega não pode ser anterior à entrada.",
+      );
+      return;
+    }
 
-        try {
-            const payload = {
-                veiculoId: parseInt(formData.veiculoId, 10),
-                funcionarioId: formData.funcionarioId
-                    ? parseInt(formData.funcionarioId, 10)
-                    : null,
-                dataEntrada: formData.dataEntrada,
-                previsaoEntrega: formData.previsaoEntrega,
-                prioridade: formData.prioridade,
-                obsDiag: formData.obsDiag
-            };
+    setSalvandoOS(true);
+    setFeedbackNovaOS("");
 
-            await api.post('/ordens-servico', payload, {
-                headers: {
-                    Authorization: gerarAutorizacaoBasica()
-                }
-            });
+    try {
+      await api.post(
+        "/ordens-servico",
+        {
+          veiculoId: Number(formData.veiculoId),
+          funcionarioId: Number(formData.funcionarioId),
+          dataEntrada: formData.dataEntrada,
+          previsaoEntrega: formData.previsaoEntrega,
+          prioridade: formData.prioridade,
+          obsDiag: formData.obsDiag,
+        },
+        { headers: auth() },
+      );
 
-            setIsModalOpen(false);
-            await carregarDados();
+      setModalNovaOS(false);
+      await carregarDados();
+    } catch (erro) {
+      console.error("Erro ao carregar gestão de OS:", erro);
+      console.error("URL:", erro.config?.url);
+      console.error("Status HTTP:", erro.response?.status);
+      console.error("Resposta do servidor:", erro.response?.data);
+      console.error("Mensagem:", erro.message);
+      setFeedbackNovaOS(
+        mensagemErro(erro, "Não foi possível criar a ordem de serviço."),
+      );
+    } finally {
+      setSalvandoOS(false);
+    }
+  };
 
-        } catch (error) {
-            console.error(error);
+  const alterarPrioridade = async (id, prioridade) => {
+    if (alterandoPrioridade !== null) return;
 
-            const msg =
-                error.response?.data?.message ||
-                'Erro ao abrir Ordem de Serviço. Verifique os dados informados.';
+    setAlterandoPrioridade(id);
 
-            alert(msg);
-        }
-    };
+    try {
+      await api.put(`/ordens-servico/${id}/prioridade`, null, {
+        params: { prioridade },
+        headers: auth(),
+      });
 
-    const handleAlterarPrioridade = async (id, novaPrioridade) => {
-        try {
-            await api.put(
-                `/ordens-servico/${id}/prioridade`,
-                null,
-                {
-                    params: {
-                        prioridade: novaPrioridade
-                    },
-                    headers: {
-                        Authorization: gerarAutorizacaoBasica()
-                    }
-                }
-            );
+      await carregarDados();
+    } catch (erro) {
+      console.error("Erro ao alterar prioridade:", erro);
+      setErroCarregamento(
+        mensagemErro(erro, "Não foi possível alterar a prioridade."),
+      );
+    } finally {
+      setAlterandoPrioridade(null);
+    }
+  };
 
-            await carregarDados();
+  const catalogoAtual =
+    novoItemTipo === "PECA" ? catalogoPecas : catalogoServicos;
 
-            if (osDetalhe?.id === id) {
-                setOsDetalhe({
-                    ...osDetalhe,
-                    prioridade: novaPrioridade
-                });
-            }
+  const itemSelecionado = catalogoAtual.find(
+    (item) => String(item.id) === String(novoItemId),
+  );
 
-        } catch (error) {
-            console.error(error);
-            alert('Não foi possível alterar a prioridade desta OS.');
-        }
-    };
+  const quantidadeNumerica = Number(novoItemQtd);
 
-    const formatarData = (dataStr) => {
-        if (!dataStr) return 'Não definida';
+  const quantidadeValida =
+    novoItemQtd.trim() !== "" &&
+    Number.isInteger(quantidadeNumerica) &&
+    quantidadeNumerica > 0;
 
-        const [ano, mes, dia] = dataStr.split('-');
-        return `${dia}/${mes}/${ano}`;
-    };
+  const estoqueDisponivel =
+    novoItemTipo !== "PECA" ||
+    (itemSelecionado &&
+      quantidadeNumerica <= Number(itemSelecionado.qtdEstoque ?? 0));
 
-    const formatarMoeda = (valor) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        }).format(Number(valor) || 0);
-    };
+  const podeAdicionar =
+    osDetalhe?.statusOperac === "EM_ANALISE" &&
+    itemSelecionado &&
+    quantidadeValida &&
+    estoqueDisponivel &&
+    !adicionandoItem &&
+    !fechandoRascunho;
 
-    const estiloPrioridade = (prioridade) => {
-        if (prioridade === 'URGENTE') {
-            return {
-                backgroundColor: '#FED7D7',
-                color: '#C53030'
-            };
-        }
+  const adicionarItem = async () => {
+    if (!osDetalhe || adicionandoItem) return;
 
-        if (prioridade === 'ALTA') {
-            return {
-                backgroundColor: '#FEEBC8',
-                color: '#C05621'
-            };
-        }
+    setFeedbackItem(null);
 
-        return {};
-    };
+    if (!itemSelecionado) {
+      setFeedbackItem({
+        tipo: "erro",
+        texto: "Selecione uma peça ou serviço.",
+      });
+      return;
+    }
 
-    const formatarStatus = (status) => {
-        const nomes = {
-            ABERTA: 'Aberta',
-            EM_ANALISE: 'Em análise',
-            AGUARDANDO_APROVACAO: 'Aguardando aprovação',
-            EM_EXECUCAO: 'Em execução',
-            FINALIZADA: 'Finalizada'
-        };
+    if (!quantidadeValida) {
+      setFeedbackItem({
+        tipo: "erro",
+        texto: "Informe uma quantidade inteira maior que zero.",
+      });
+      return;
+    }
 
-        return nomes[status] || status || 'Não informado';
-    };
+    if (!estoqueDisponivel) {
+      setFeedbackItem({
+        tipo: "erro",
+        texto: "A quantidade solicitada supera o estoque disponível.",
+      });
+      return;
+    }
 
-    const ordensFiltradas = ordens.filter((os) => {
-        const busca = termoBusca.trim().toLowerCase();
+    setAdicionandoItem(true);
 
-        if (!busca) return true;
+    try {
+      await api.post(
+        `/ordens-servico/${osDetalhe.id}/itens`,
+        {
+          itemId: Number(novoItemId),
+          quantidade: quantidadeNumerica,
+        },
+        { headers: auth() },
+      );
 
-        const placa = String(
-            os.veiculo?.placa || ''
-        ).toLowerCase();
+      await carregarDados();
 
-        const modelo = String(
-            os.veiculo?.modelo || ''
-        ).toLowerCase();
+      setNovoItemId("");
+      setNovoItemQtd("1");
+      setFeedbackItem({
+        tipo: "sucesso",
+        texto: "Item incluído no orçamento com sucesso.",
+      });
+    } catch (erro) {
+      console.error("Erro ao adicionar item:", erro);
+      setFeedbackItem({
+        tipo: "erro",
+        texto: mensagemErro(
+          erro,
+          "Não foi possível adicionar o item. Confira o estoque.",
+        ),
+      });
+    } finally {
+      setAdicionandoItem(false);
+    }
+  };
 
-        const cliente = String(
-            os.veiculo?.cliente?.nome || ''
-        ).toLowerCase();
+  const valorBruto = Number(osDetalhe?.valorTotal ?? 0);
+  const descontoNumerico = Number(desconto);
 
-        const mecanico = String(
-            os.mecanResp?.nome || ''
-        ).toLowerCase();
+  const descontoValido =
+    desconto.trim() !== "" &&
+    /^\d+(\.\d{1,2})?$/.test(desconto) &&
+    Number.isFinite(descontoNumerico) &&
+    descontoNumerico >= 0 &&
+    descontoNumerico <= valorBruto;
 
-        const idStr = String(os.id || '');
+  const valorFinal = Math.max(
+    0,
+    valorBruto - (descontoValido ? descontoNumerico : 0),
+  );
 
-        return (
-            placa.includes(busca) ||
-            modelo.includes(busca) ||
-            cliente.includes(busca) ||
-            mecanico.includes(busca) ||
-            idStr.includes(busca)
-        );
-    });
+  const emAnalise = osDetalhe?.statusOperac === "EM_ANALISE";
+  const itensOS = Array.isArray(osDetalhe?.itens) ? osDetalhe.itens : [];
 
-    // RF09 - Calculo do orcamento
-    const valorBruto = Number(
-        osDetalhe?.valorTotal ?? 0
+  const fecharRascunho = async () => {
+    if (!osDetalhe || !emAnalise || fechandoRascunho || adicionandoItem) {
+      return;
+    }
+
+    setFeedbackOrcamento(null);
+
+    if (!itensOS.length) {
+      setFeedbackOrcamento({
+        tipo: "erro",
+        texto: "Adicione pelo menos um item antes de fechar o orçamento.",
+      });
+      return;
+    }
+
+    if (!descontoValido) {
+      setFeedbackOrcamento({
+        tipo: "erro",
+        texto: "Informe um desconto válido, entre zero e o subtotal.",
+      });
+      return;
+    }
+
+    const confirmado = window.confirm(
+      `Fechar orçamento da OS #${osDetalhe.id}?\n\n` +
+        `Subtotal: ${moeda(valorBruto)}\n` +
+        `Desconto: ${moeda(descontoNumerico)}\n` +
+        `Valor final: ${moeda(valorFinal)}\n\n` +
+        "O orçamento será enviado para aprovação do cliente.",
     );
 
-    const descontoNumerico = Number(desconto);
+    if (!confirmado) return;
 
-    const descontoValido =
-        desconto.trim() !== '' &&
-        Number.isFinite(descontoNumerico) &&
-        descontoNumerico >= 0 &&
-        descontoNumerico <= valorBruto &&
-        /^\d+(\.\d{1,2})?$/.test(desconto);
+    setFechandoRascunho(true);
 
-    const valorFinal = Math.max(
-        0,
-        valorBruto -
-            (descontoValido ? descontoNumerico : 0)
+    try {
+      await api.put(`/ordens-servico/${osDetalhe.id}/fechar-rascunho`, null, {
+        params: {
+          desconto: descontoNumerico.toFixed(2),
+        },
+        headers: auth(),
+      });
+
+      setOsDetalhe((anterior) => ({
+        ...anterior,
+        statusOperac: "AGUARDANDO_APROVACAO",
+        desconto: descontoNumerico,
+        valorFinal,
+      }));
+
+      setFeedbackOrcamento({
+        tipo: "sucesso",
+        texto: "Orçamento fechado. Aguardando aprovação do cliente.",
+      });
+
+      await carregarDados();
+    } catch (erro) {
+      console.error("Erro ao fechar orçamento:", erro);
+      setFeedbackOrcamento({
+        tipo: "erro",
+        texto: mensagemErro(erro, "Não foi possível fechar o orçamento."),
+      });
+    } finally {
+      setFechandoRascunho(false);
+    }
+  };
+
+  const ordensFiltradas = ordens.filter((os) => {
+    if (filtroStatus !== "TODOS" && os.statusOperac !== filtroStatus) {
+      return false;
+    }
+
+    const termo = busca.trim().toLowerCase();
+    if (!termo) return true;
+
+    const campos = [
+      os.id,
+      os.veiculo?.placa,
+      os.veiculo?.marca,
+      os.veiculo?.modelo,
+      os.veiculo?.cliente?.nome,
+      os.mecanResp?.nome,
+      nomeStatus(os.statusOperac),
+    ];
+
+    return campos.some((campo) =>
+      String(campo ?? "")
+        .toLowerCase()
+        .includes(termo),
     );
+  });
 
-    const podeFecharRascunho =
-        osDetalhe?.statusOperac === 'EM_ANALISE';
+  const totalEmAnalise = ordens.filter(
+    (os) => os.statusOperac === "EM_ANALISE",
+  ).length;
 
-    // RF09 - Fechamento com autenticacao
-    const handleFecharRascunho = async () => {
-        if (
-            !osDetalhe ||
-            !podeFecharRascunho ||
-            fechandoRascunho
-        ) {
-            return;
-        }
+  const totalAguardando = ordens.filter(
+    (os) => os.statusOperac === "AGUARDANDO_APROVACAO",
+  ).length;
 
-        setErroFechamento('');
-        setSucessoFechamento('');
+  const totalExecucao = ordens.filter(
+    (os) => os.statusOperac === "EM_EXECUCAO",
+  ).length;
 
-        if (!descontoValido) {
-            setErroFechamento(
-                'Informe um desconto válido, entre R$ 0,00 e o subtotal.'
-            );
-            return;
-        }
-
-        const confirmado = window.confirm(
-            `Deseja fechar o orçamento da OS #${osDetalhe.id}?\n\n` +
-            `Subtotal: ${formatarMoeda(valorBruto)}\n` +
-            `Desconto: ${formatarMoeda(descontoNumerico)}\n` +
-            `Valor final: ${formatarMoeda(valorFinal)}\n\n` +
-            'A OS ficará aguardando aprovação do cliente.'
-        );
-
-        if (!confirmado) return;
-
-        setFechandoRascunho(true);
-
-        try {
-            const autorizacao = gerarAutorizacaoBasica();
-
-            await api.put(
-                `/ordens-servico/${osDetalhe.id}/fechar-rascunho`,
-                null,
-                {
-                    params: {
-                        desconto: descontoNumerico.toFixed(2)
-                    },
-                    headers: {
-                        Authorization: autorizacao
-                    }
-                }
-            );
-
-            setOsDetalhe((anterior) => ({
-                ...anterior,
-                statusOperac: 'AGUARDANDO_APROVACAO',
-                desconto: descontoNumerico,
-                valorFinal
-            }));
-
-            setSucessoFechamento(
-                'Orçamento fechado com sucesso! Aguardando aprovação do cliente.'
-            );
-
-            await carregarDados();
-
-        } catch (error) {
-            console.error(
-                'Erro ao fechar orçamento:',
-                error
-            );
-
-            setErroFechamento(
-                error.response?.data?.message ||
-                error.response?.data?.detail ||
-                'Não foi possível fechar o orçamento. Verifique se a OS possui itens e está em análise.'
-            );
-
-        } finally {
-            setFechandoRascunho(false);
-        }
-    };
-
-    // RF07 - Adicionar Peça ou Serviço
-    const handleAdicionarItem = async () => {
-        if (!osDetalhe || !novoItemId || adicionandoItem) return;
-
-        setAdicionandoItem(true);
-        setErroFechamento('');
-
-        try {
-            const payload = {
-                itemId: parseInt(novoItemId, 10),
-                quantidade: parseInt(novoItemQtd, 10) || 1
-            };
-
-            await api.post(`/ordens-servico/${osDetalhe.id}/itens`, payload, {
-                headers: { Authorization: gerarAutorizacaoBasica() }
-            });
-
-            await carregarDados();
-
-            const resPecas = await api.get('/pecas', { headers: { Authorization: gerarAutorizacaoBasica() } });
-            setCatalogoPecas(Array.isArray(resPecas.data) ? resPecas.data : []);
-
-            // ==========================================
-            // 2. ADICIONE ESTAS LINHAS AQUI PARA ATUALIZAR O MODAL:
-            // Busca a OS recém-atualizada e injeta no modal
-            const autorizacao = gerarAutorizacaoBasica();
-            const resOS = await api.get('/ordens-servico', { headers: { Authorization: autorizacao } });
-
-            // Encontra a mesma OS, mas agora com os dados novos do banco
-            const osAtualizada = resOS.data.find(os => os.id === osDetalhe.id);
-            if (osAtualizada) {
-                setOsDetalhe(osAtualizada);
-            }
-            // ==========================================
-
-            // Limpa a seleção e recarrega para ver o valor atualizado e o stock abatido
-            setNovoItemId('');
-            setNovoItemQtd('1');
-            await carregarDados();
-
-            // Opcional: Atualizar o osDetalhe atual com os dados recém-carregados
-            // se tiveres uma rota de GET específico, ou pedir ao utilizador para reabrir.
-
-            alert("Item adicionado com sucesso!");
-
-        } catch (error) {
-            console.error('Erro ao adicionar item:', error);
-            const msg = error.response?.data?.message || 'Não foi possível adicionar o item. Verifique o stock.';
-            setErroFechamento(msg); // Usamos o mesmo estado de erro para simplificar o ecrã
-        } finally {
-            setAdicionandoItem(false);
-        }
-    };
-
-    return (
+  return (
+    <main className="gf-gestao">
+      <header className="gf-gestao-topo">
         <div>
-            <div className="equipe-header-actions">
-                <input
-                    type="text"
-                    placeholder="Pesquisar por nº da OS, placa, veículo, cliente ou mecânico..."
-                    className="search-bar"
-                    value={termoBusca}
-                    onChange={(e) =>
-                        setTermoBusca(e.target.value)
+          <span className="gf-eyebrow">CENTRAL OPERACIONAL</span>
+          <h1>Gestão de Ordens de Serviço</h1>
+          <p>
+            Acompanhe atendimentos, organize prioridades e prepare orçamentos.
+          </p>
+        </div>
+
+        <button type="button" className="gf-btn-primario" onClick={abrirNovaOS}>
+          + Nova Ordem de Serviço
+        </button>
+      </header>
+
+      <section className="gf-indicadores" aria-label="Resumo das ordens">
+        <div className="gf-indicador">
+          <span>Total de ordens</span>
+          <strong>{ordens.length}</strong>
+          <small>Registradas no sistema</small>
+        </div>
+
+        <div className="gf-indicador">
+          <span>Em análise</span>
+          <strong>{totalEmAnalise}</strong>
+          <small>Em preparação</small>
+        </div>
+
+        <div className="gf-indicador">
+          <span>Aguardando cliente</span>
+          <strong>{totalAguardando}</strong>
+          <small>Pendentes de autorização</small>
+        </div>
+
+        <div className="gf-indicador">
+          <span>Em execução</span>
+          <strong>{totalExecucao}</strong>
+          <small>Serviços autorizados</small>
+        </div>
+      </section>
+
+      <div className="gf-gestao-filtros">
+        <input
+          type="search"
+          className="gf-campo-busca"
+          placeholder="Buscar OS, placa, veículo, cliente ou mecânico..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          aria-label="Buscar ordens de serviço"
+        />
+
+        <select
+          className="gf-filtro-status"
+          value={filtroStatus}
+          onChange={(e) => setFiltroStatus(e.target.value)}
+          aria-label="Filtrar por status"
+        >
+          <option value="TODOS">Todos os status</option>
+          {Object.entries(nomesStatus).map(([valor, nome]) => (
+            <option key={valor} value={valor}>
+              {nome}
+            </option>
+          ))}
+        </select>
+
+        <button
+          type="button"
+          className="gf-btn-secundario"
+          onClick={() => carregarDados(true)}
+          disabled={carregando}
+        >
+          {carregando ? "Atualizando..." : "Atualizar"}
+        </button>
+      </div>
+
+      <Aviso>{erroCarregamento}</Aviso>
+
+      {carregando ? (
+        <div className="gf-estado-vazio">Carregando ordens de serviço...</div>
+      ) : ordensFiltradas.length === 0 ? (
+        <div className="gf-estado-vazio">
+          Nenhuma ordem encontrada para os filtros selecionados.
+        </div>
+      ) : (
+        <section className="gf-os-grid">
+          {ordensFiltradas.map((os) => (
+            <article
+              key={os.id}
+              className="gf-os-card"
+              role="button"
+              tabIndex={0}
+              onClick={() => abrirDetalhes(os)}
+              onKeyDown={(e) => {
+                if (e.target !== e.currentTarget) return;
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  abrirDetalhes(os);
+                }
+              }}
+            >
+              <div className="gf-card-topo">
+                <span className="gf-card-numero">OS #{os.id}</span>
+
+                <span
+                  className={`gf-status-tag gf-status-${os.statusOperac || "INDEFINIDO"}`}
+                >
+                  {nomeStatus(os.statusOperac)}
+                </span>
+              </div>
+
+              <h3>
+                {os.veiculo
+                  ? `${os.veiculo.marca} ${os.veiculo.modelo}`
+                  : "Veículo não informado"}
+              </h3>
+
+              <p className="gf-card-placa">
+                {os.veiculo?.placa || "Placa não informada"}
+              </p>
+
+              <div className="gf-card-dados">
+                <div>
+                  <span>Cliente</span>
+                  <strong>
+                    {os.veiculo?.cliente?.nome || "Não informado"}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Mecânico</span>
+                  <strong>{os.mecanResp?.nome || "Não atribuído"}</strong>
+                </div>
+
+                <div>
+                  <span>Entrada</span>
+                  <strong>{dataBR(os.dataEntrada)}</strong>
+                </div>
+
+                <div>
+                  <span>Previsão</span>
+                  <strong>{dataBR(os.previsaoEntrega)}</strong>
+                </div>
+              </div>
+
+              <div
+                className="gf-card-rodape"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="gf-prioridade-controle">
+                  <label htmlFor={`prioridade-${os.id}`}>Prioridade</label>
+
+                  <select
+                    id={`prioridade-${os.id}`}
+                    value={os.prioridade || "NORMAL"}
+                    disabled={
+                      alterandoPrioridade !== null ||
+                      os.statusOperac === "FINALIZADA" ||
+                      os.statusOperac === "AGUARDANDO_APROVACAO"
                     }
-                />
+                    onChange={(e) => alterarPrioridade(os.id, e.target.value)}
+                  >
+                    <option value="NORMAL">Normal</option>
+                    <option value="ALTA">Alta</option>
+                    <option value="URGENTE">Urgente</option>
+                  </select>
+                </div>
 
                 <button
-                    className="btn-primary"
-                    onClick={abrirModalNovaOS}
+                  type="button"
+                  className="gf-btn-detalhes"
+                  onClick={() => abrirDetalhes(os)}
                 >
-                    + Nova Ordem de Serviço
+                  Ver detalhes
                 </button>
-            </div>
+              </div>
+            </article>
+          ))}
+        </section>
+      )}
 
-            {erroCarregamento && (
-                <div
-                    className="gf-orcamento-feedback gf-feedback-erro"
-                    role="alert"
-                >
-                    {erroCarregamento}
+      {osDetalhe &&
+        createPortal(
+          <div
+            className="modal-overlay gf-overlay"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) fecharDetalhes();
+            }}
+          >
+            <div
+              className="modal-content gf-os-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="gf-titulo-detalhes"
+            >
+              <header className="gf-modal-cabecalho">
+                <div>
+                  <span className="gf-os-eyebrow">DETALHES DO ATENDIMENTO</span>
+                  <h2 id="gf-titulo-detalhes">
+                    Ordem de Serviço #{osDetalhe.id}
+                  </h2>
+                  <p>Informações, itens e revisão do orçamento.</p>
                 </div>
-            )}
 
-            <div className="equipe-grid">
-                {carregando ? (
-                    <p style={{
-                        color: 'var(--gf-text-muted)',
-                        marginTop: '16px'
-                    }}>
-                        Carregando ordens de serviço...
-                    </p>
-                ) : ordensFiltradas.length === 0 ? (
-                    <p style={{
-                        color: 'var(--gf-text-muted)',
-                        marginTop: '16px'
-                    }}>
-                        {termoBusca
-                            ? `Nenhuma Ordem de Serviço encontrada para "${termoBusca}".`
-                            : erroCarregamento
-                                ? 'A listagem não pôde ser carregada.'
-                                : 'Nenhuma Ordem de Serviço registrada no momento.'}
-                    </p>
+                <button
+                  type="button"
+                  className="gf-modal-fechar"
+                  onClick={fecharDetalhes}
+                  disabled={ocupado}
+                  aria-label="Fechar detalhes"
+                >
+                  ×
+                </button>
+              </header>
+
+              <div className="gf-os-status-row">
+                <span
+                  className={`gf-status-tag gf-status-${osDetalhe.statusOperac}`}
+                >
+                  {nomeStatus(osDetalhe.statusOperac)}
+                </span>
+
+                <span className="gf-os-priority">
+                  Prioridade: {osDetalhe.prioridade || "NORMAL"}
+                </span>
+              </div>
+
+              <section className="gf-os-section">
+                <h3 className="gf-os-section-title">
+                  Informações do atendimento
+                </h3>
+
+                <div className="gf-os-info-grid">
+                  <div className="gf-os-info-item">
+                    <span>Veículo</span>
+                    <strong>
+                      {osDetalhe.veiculo
+                        ? `${osDetalhe.veiculo.marca} ${osDetalhe.veiculo.modelo}`
+                        : "Não informado"}
+                    </strong>
+                  </div>
+
+                  <div className="gf-os-info-item">
+                    <span>Placa</span>
+                    <strong>{osDetalhe.veiculo?.placa || "N/A"}</strong>
+                  </div>
+
+                  <div className="gf-os-info-item">
+                    <span>Cliente</span>
+                    <strong>{osDetalhe.veiculo?.cliente?.nome || "N/A"}</strong>
+                  </div>
+
+                  <div className="gf-os-info-item">
+                    <span>Mecânico</span>
+                    <strong>
+                      {osDetalhe.mecanResp?.nome || "Não atribuído"}
+                    </strong>
+                  </div>
+
+                  <div className="gf-os-info-item">
+                    <span>Data de entrada</span>
+                    <strong>{dataBR(osDetalhe.dataEntrada)}</strong>
+                  </div>
+
+                  <div className="gf-os-info-item">
+                    <span>Previsão de entrega</span>
+                    <strong>{dataBR(osDetalhe.previsaoEntrega)}</strong>
+                  </div>
+
+                  <div className="gf-os-info-item">
+                    <span>Status do pagamento</span>
+                    <strong>{osDetalhe.statusPag || "Não informado"}</strong>
+                  </div>
+                </div>
+
+                <div className="gf-os-diagnostico">
+                  <span>Diagnóstico inicial</span>
+                  <p>{osDetalhe.obsDiag || "Sem observações registradas."}</p>
+                </div>
+              </section>
+
+              <section className="gf-os-section">
+                <div className="gf-secao-cabecalho">
+                  <div>
+                    <span className="gf-os-eyebrow">
+                      RF07 · PEÇAS E SERVIÇOS
+                    </span>
+                    <h3 className="gf-os-section-title">Itens do orçamento</h3>
+                  </div>
+
+                  <span className="gf-contador-itens">
+                    {itensOS.length} {itensOS.length === 1 ? "item" : "itens"}
+                  </span>
+                </div>
+
+                {itensOS.length ? (
+                  <div className="gf-itens-lista">
+                    {itensOS.map((item, index) => (
+                      <div
+                        key={`${item.id ?? "item"}-${index}`}
+                        className="gf-item-linha"
+                      >
+                        <div className="gf-item-info">
+                          <strong className="gf-item-descricao">
+                            {item.descricao || "Item sem descrição"}
+                          </strong>
+                          <span className="gf-item-detalhes">
+                            Quantidade: {item.quantidade ?? item.qtd ?? 1}
+                            {item.valorUnitario != null &&
+                              ` · Unitário: ${moeda(item.valorUnitario)}`}
+                          </span>
+                        </div>
+
+                        <strong className="gf-item-subtotal">
+                          {moeda(item.subtotal)}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                    ordensFiltradas.map((os) => (
-                        <div
-                            key={os.id}
-                            className="employee-card"
-                            onClick={() =>
-                                abrirDetalhesOS(os)
-                            }
-                            style={{ cursor: 'pointer' }}
-                        >
-                            <span
-                                className="badge-active"
-                                style={estiloPrioridade(os.prioridade)}
-                            >
-                                {os.prioridade || 'NORMAL'}
-                                {' • '}
-                                {formatarStatus(os.statusOperac)}
-                            </span>
-
-                            <div className="card-profile">
-                                <div className="avatar-placeholder">
-                                    📋
-                                </div>
-
-                                <div>
-                                    <h3 style={{
-                                        color: 'var(--gf-primary-dark)',
-                                        fontSize: '1.1rem'
-                                    }}>
-                                        OS #{os.id} —{' '}
-                                        {os.veiculo
-                                            ? `${os.veiculo.marca} ${os.veiculo.modelo}`
-                                            : 'Veículo'}
-                                    </h3>
-
-                                    <span style={{
-                                        color: 'var(--gf-text-muted)',
-                                        fontSize: '0.85rem'
-                                    }}>
-                                        Placa:{' '}
-                                        <strong>
-                                            {os.veiculo?.placa || 'N/A'}
-                                        </strong>
-
-                                        {os.veiculo?.cliente?.nome
-                                            ? ` | Cliente: ${os.veiculo.cliente.nome}`
-                                            : ''}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="card-info">
-                                <p>
-                                    📅 Entrada:{' '}
-                                    <strong>
-                                        {formatarData(os.dataEntrada)}
-                                    </strong>
-                                </p>
-
-                                <p>
-                                    🏁 Previsão Entrega:{' '}
-                                    <strong>
-                                        {formatarData(os.previsaoEntrega)}
-                                    </strong>
-                                </p>
-
-                                <p>
-                                    👨‍🔧 Mecânico:{' '}
-                                    <strong>
-                                        {os.mecanResp?.nome ||
-                                            'Não designado'}
-                                    </strong>
-                                </p>
-                            </div>
-
-                            <div
-                                className="card-actions"
-                                onClick={(e) =>
-                                    e.stopPropagation()
-                                }
-                            >
-                                <select
-                                    className="form-input"
-                                    style={{
-                                        padding: '6px 10px',
-                                        fontSize: '0.85rem'
-                                    }}
-                                    value={
-                                        os.prioridade || 'NORMAL'
-                                    }
-                                    disabled={
-                                        os.statusOperac === 'FINALIZADA' ||
-                                        os.statusOperac === 'AGUARDANDO_APROVACAO'
-                                    }
-                                    onChange={(e) =>
-                                        handleAlterarPrioridade(
-                                            os.id,
-                                            e.target.value
-                                        )
-                                    }
-                                >
-                                    <option value="NORMAL">
-                                        Prioridade: Normal
-                                    </option>
-
-                                    <option value="ALTA">
-                                        Prioridade: Alta
-                                    </option>
-
-                                    <option value="URGENTE">
-                                        Prioridade: Urgente
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-                    ))
+                  <div className="gf-itens-vazio">
+                    Nenhuma peça ou serviço adicionado.
+                    <span>Selecione um item do catálogo para começar.</span>
+                  </div>
                 )}
+
+                {emAnalise && (
+                  <div className="gf-adicionar-item">
+                    <h4>Adicionar ao orçamento</h4>
+                    <p>
+                      Selecione uma peça ou serviço e informe a quantidade
+                      desejada.
+                    </p>
+
+                    <div className="gf-item-form-grid">
+                      <div className="gf-item-campo">
+                        <label htmlFor="gf-tipo-item">Tipo</label>
+                        <select
+                          id="gf-tipo-item"
+                          value={novoItemTipo}
+                          disabled={ocupado}
+                          onChange={(e) => {
+                            setNovoItemTipo(e.target.value);
+                            setNovoItemId("");
+                            setNovoItemQtd("1");
+                            setFeedbackItem(null);
+                          }}
+                        >
+                          <option value="PECA">Peça</option>
+                          <option value="SERVICO">Serviço</option>
+                        </select>
+                      </div>
+
+                      <div className="gf-item-campo">
+                        <label htmlFor="gf-catalogo-item">
+                          Item do catálogo
+                        </label>
+                        <select
+                          id="gf-catalogo-item"
+                          value={novoItemId}
+                          disabled={ocupado}
+                          onChange={(e) => {
+                            setNovoItemId(e.target.value);
+                            setFeedbackItem(null);
+                          }}
+                        >
+                          <option value="">Selecione um item...</option>
+
+                          {catalogoAtual.map((item) => (
+                            <option
+                              key={item.id}
+                              value={item.id}
+                              disabled={
+                                novoItemTipo === "PECA" &&
+                                Number(item.qtdEstoque ?? 0) <= 0
+                              }
+                            >
+                              {item.descricao} — {moeda(item.valorUni)}
+                              {novoItemTipo === "PECA"
+                                ? ` (estoque: ${item.qtdEstoque ?? 0})`
+                                : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="gf-item-campo">
+                        <label htmlFor="gf-qtd-item">Quantidade</label>
+                        <input
+                          id="gf-qtd-item"
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={novoItemQtd}
+                          disabled={ocupado}
+                          onChange={(e) => {
+                            setNovoItemQtd(e.target.value);
+                            setFeedbackItem(null);
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {itemSelecionado && (
+                      <div className="gf-item-previsao">
+                        <div>
+                          <span>Valor unitário</span>
+                          <strong>{moeda(itemSelecionado.valorUni)}</strong>
+                        </div>
+
+                        {novoItemTipo === "PECA" && (
+                          <div>
+                            <span>Estoque disponível</span>
+                            <strong>{itemSelecionado.qtdEstoque ?? 0}</strong>
+                          </div>
+                        )}
+
+                        <div>
+                          <span>Subtotal previsto</span>
+                          <strong>
+                            {moeda(
+                              quantidadeValida
+                                ? Number(itemSelecionado.valorUni) *
+                                    quantidadeNumerica
+                                : 0,
+                            )}
+                          </strong>
+                        </div>
+                      </div>
+                    )}
+
+                    {itemSelecionado && !estoqueDisponivel && (
+                      <Aviso>Quantidade maior que o estoque disponível.</Aviso>
+                    )}
+
+                    {feedbackItem && (
+                      <Aviso tipo={feedbackItem.tipo}>
+                        {feedbackItem.texto}
+                      </Aviso>
+                    )}
+
+                    <button
+                      type="button"
+                      className="gf-btn-adicionar-item"
+                      disabled={!podeAdicionar}
+                      onClick={adicionarItem}
+                    >
+                      {adicionandoItem
+                        ? "Adicionando item..."
+                        : "+ Incluir no orçamento"}
+                    </button>
+                  </div>
+                )}
+              </section>
+
+              <section className="gf-orcamento">
+                <div className="gf-orcamento-header">
+                  <div>
+                    <span className="gf-orcamento-eyebrow">
+                      RF09 · REVISÃO FINANCEIRA
+                    </span>
+                    <h3>Resumo do orçamento</h3>
+                    <p>
+                      Confira os valores antes de encaminhar o orçamento ao
+                      cliente.
+                    </p>
+                  </div>
+
+                  <div className="gf-orcamento-icon">R$</div>
+                </div>
+
+                <div className="gf-orcamento-resumo">
+                  <div className="gf-orcamento-linha">
+                    <span>Subtotal de peças e serviços</span>
+                    <strong>{moeda(valorBruto)}</strong>
+                  </div>
+
+                  <div className="gf-orcamento-linha">
+                    <span>Desconto</span>
+                    <strong className="gf-orcamento-desconto">
+                      −{" "}
+                      {moeda(
+                        emAnalise
+                          ? descontoValido
+                            ? descontoNumerico
+                            : 0
+                          : osDetalhe.desconto,
+                      )}
+                    </strong>
+                  </div>
+
+                  <div className="gf-orcamento-total">
+                    <div>
+                      <span>VALOR FINAL</span>
+                      <small>
+                        {emAnalise
+                          ? "Prévia em tempo real"
+                          : "Valor registrado"}
+                      </small>
+                    </div>
+
+                    <strong>
+                      {moeda(emAnalise ? valorFinal : osDetalhe.valorFinal)}
+                    </strong>
+                  </div>
+                </div>
+
+                {emAnalise && (
+                  <div className="gf-orcamento-edicao">
+                    <label htmlFor="gf-desconto">Aplicar desconto</label>
+                    <p>
+                      Informe o desconto em reais, com até duas casas decimais.
+                    </p>
+
+                    <div className="gf-desconto-input-wrapper">
+                      <span>R$</span>
+                      <input
+                        id="gf-desconto"
+                        type="number"
+                        min="0"
+                        max={valorBruto}
+                        step="0.01"
+                        value={desconto}
+                        disabled={ocupado}
+                        onChange={(e) => {
+                          setDesconto(e.target.value);
+                          setFeedbackOrcamento(null);
+                        }}
+                      />
+                    </div>
+
+                    {!descontoValido && (
+                      <span className="gf-desconto-aviso">
+                        Informe um valor entre R$ 0,00 e {moeda(valorBruto)}.
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {feedbackOrcamento && (
+                  <Aviso tipo={feedbackOrcamento.tipo}>
+                    {feedbackOrcamento.texto}
+                  </Aviso>
+                )}
+
+                {emAnalise ? (
+                  <button
+                    type="button"
+                    className="gf-btn-fechar-orcamento"
+                    disabled={
+                      ocupado || !descontoValido || itensOS.length === 0
+                    }
+                    onClick={fecharRascunho}
+                  >
+                    {fechandoRascunho
+                      ? "Fechando orçamento..."
+                      : "Confirmar fechamento do orçamento"}
+                  </button>
+                ) : (
+                  <div className="gf-orcamento-bloqueado">
+                    {osDetalhe.statusOperac === "AGUARDANDO_APROVACAO"
+                      ? "Orçamento fechado. Aguardando aprovação do cliente."
+                      : osDetalhe.statusOperac === "ORCAMENTO_REJEITADO"
+                        ? "Orçamento rejeitado pelo cliente."
+                        : osDetalhe.statusOperac === "EM_EXECUCAO"
+                          ? "Orçamento aprovado. Serviço em execução."
+                          : "O fechamento está disponível apenas para ordens em análise."}
+                  </div>
+                )}
+              </section>
+
+              <footer className="gf-os-footer">
+                <button
+                  type="button"
+                  className="gf-btn-voltar"
+                  onClick={fecharDetalhes}
+                  disabled={ocupado}
+                >
+                  Fechar detalhes
+                </button>
+              </footer>
             </div>
-
-            {/* MODAL DE DETALHES DA OS + RF09 */}
-            {osDetalhe && createPortal(
-                <div className="modal-overlay">
-                    <div className="modal-content gf-os-modal">
-                        <div className="modal-header">
-                            <div>
-                                <span className="gf-os-eyebrow">
-                                    GESTÃO DE ORDENS DE SERVIÇO
-                                </span>
-
-                                <h2 style={{
-                                    color: 'var(--gf-primary-dark)'
-                                }}>
-                                    Ordem de Serviço #{osDetalhe.id}
-                                </h2>
-
-                                <span className="gf-os-subtitle">
-                                    Detalhes do atendimento e orçamento
-                                </span>
-                            </div>
-
-                            <button
-                                className="btn-close"
-                                onClick={fecharDetalhesOS}
-                                disabled={fechandoRascunho}
-                            >
-                                ×
-                            </button>
-                        </div>
-
-                        <div className="gf-os-status-row">
-                            <span className="gf-os-status">
-                                <span className="gf-os-status-dot" />
-                                {formatarStatus(
-                                    osDetalhe.statusOperac
-                                )}
-                            </span>
-
-                            <span
-                                className="gf-os-priority"
-                                style={estiloPrioridade(
-                                    osDetalhe.prioridade
-                                )}
-                            >
-                                Prioridade:{' '}
-                                {osDetalhe.prioridade || 'NORMAL'}
-                            </span>
-                        </div>
-
-                        <div className="gf-os-section">
-                            <h3 className="gf-os-section-title">
-                                Informações do atendimento
-                            </h3>
-
-                            <div className="gf-os-info-grid">
-                                <div className="gf-os-info-item">
-                                    <span>Veículo</span>
-                                    <strong>
-                                        {osDetalhe.veiculo
-                                            ? `${osDetalhe.veiculo.marca} ${osDetalhe.veiculo.modelo}`
-                                            : 'N/A'}
-                                    </strong>
-                                </div>
-
-                                <div className="gf-os-info-item">
-                                    <span>Placa</span>
-                                    <strong>
-                                        {osDetalhe.veiculo?.placa ||
-                                            'N/A'}
-                                    </strong>
-                                </div>
-
-                                <div className="gf-os-info-item">
-                                    <span>Cliente proprietário</span>
-                                    <strong>
-                                        {osDetalhe.veiculo?.cliente?.nome ||
-                                            'N/A'}
-                                    </strong>
-                                </div>
-
-                                <div className="gf-os-info-item">
-                                    <span>Mecânico responsável</span>
-                                    <strong>
-                                        {osDetalhe.mecanResp?.nome ||
-                                            'Não atribuído'}
-                                    </strong>
-                                </div>
-
-                                <div className="gf-os-info-item">
-                                    <span>Data de entrada</span>
-                                    <strong>
-                                        {formatarData(
-                                            osDetalhe.dataEntrada
-                                        )}
-                                    </strong>
-                                </div>
-
-                                <div className="gf-os-info-item">
-                                    <span>Previsão de entrega</span>
-                                    <strong>
-                                        {formatarData(
-                                            osDetalhe.previsaoEntrega
-                                        )}
-                                    </strong>
-                                </div>
-
-                                <div className="gf-os-info-item">
-                                    <span>Status do pagamento</span>
-                                    <strong>
-                                        {osDetalhe.statusPag ||
-                                            'Não informado'}
-                                    </strong>
-                                </div>
-                            </div>
-
-                            <div className="gf-os-diagnostico">
-                                <span>
-                                    Observações / Diagnóstico inicial
-                                </span>
-
-                                <p>
-                                    {osDetalhe.obsDiag ||
-                                        'Sem observações registradas.'}
-                                </p>
-                            </div>
-                        </div>
-
-                    {/* NOVO PAINEL DE ITENS (RF07) */}
-                    <div className="gf-os-section">
-                        <h3 className="gf-os-section-title">Itens e Serviços Aplicados</h3>
-                        {/* Lista de itens atuais */}
-                        {osDetalhe.itens && osDetalhe.itens.length > 0 ? (
-                            <ul style={{ listStyle: 'none', padding: 0, marginBottom: '15px' }}>
-                                {osDetalhe.itens.map((item, index) => (
-                                    <li key={index} style={{ padding: '8px', borderBottom: '1px solid #eee', fontSize: '0.85rem' }}>
-                                        <span style={{ fontWeight: 'bold' }}>{item.quantidade}x</span> {item.descricao} - {formatarMoeda(item.subtotal)}
-                                        {/* Se quiseres mostrar o valor unitário: {formatarMoeda(item.valorUnitario)} */}
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '15px' }}>Nenhum item adicionado a esta OS ainda.</p>
-                        )}
-
-
-                        {/* Formulário de Adição (Apenas se não estiver bloqueada) */}
-                        {podeFecharRascunho && (
-                            <div style={{ background: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                                <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                                    <select
-                                        className="form-input"
-                                        value={novoItemTipo}
-                                        onChange={(e) => {
-                                            setNovoItemTipo(e.target.value);
-                                            setNovoItemId('');
-                                        }}
-                                    >
-                                        <option value="PECA">Adicionar Peça</option>
-                                        <option value="SERVICO">Adicionar Serviço</option>
-                                    </select>
-
-                                    <select
-                                        className="form-input"
-                                        style={{ flex: 1 }}
-                                        value={novoItemId}
-                                        onChange={(e) => setNovoItemId(e.target.value)}
-                                    >
-                                        <option value="">Selecione...</option>
-                                        {novoItemTipo === 'PECA'
-                                            ? catalogoPecas.map(p => (
-                                                <option key={p.id} value={p.id} disabled={p.qtdEstoque <= 0}>
-                                                    {p.descricao} (qtd: {p.qtdEstoque}) - {formatarMoeda(p.valorUni)}
-                                                </option>
-                                            ))
-                                            : catalogoServicos.map(s => (
-                                                <option key={s.id} value={s.id}>
-                                                    {s.descricao} - {formatarMoeda(s.valorUni)}
-                                                </option>
-                                            ))
-                                        }
-                                    </select>
-
-                                    <input
-                                        type="number"
-                                        className="form-input"
-                                        style={{ width: '80px' }}
-                                        min="1"
-                                        value={novoItemQtd}
-                                        onChange={(e) => setNovoItemQtd(e.target.value)}
-                                        disabled={novoItemTipo === 'SERVICO'} // Serviços costumam ser qtd 1
-                                    />
-                                </div>
-
-                                <button
-                                    className="btn-primary"
-                                    style={{ width: '100%', padding: '10px' }}
-                                    onClick={handleAdicionarItem}
-                                    disabled={!novoItemId || adicionandoItem}
-                                >
-                                    {adicionandoItem ? 'A Adicionar...' : '+ Incluir no Orçamento'}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* PAINEL FINANCEIRO RF09 AQUI... */}
-
-                        {/* PAINEL FINANCEIRO RF09 */}
-                        <div className="gf-orcamento">
-                            <div className="gf-orcamento-header">
-                                <div>
-                                    <span className="gf-orcamento-eyebrow">
-                                        RF09 · REVISÃO FINANCEIRA
-                                    </span>
-
-                                    <h3>Resumo do orçamento</h3>
-
-                                    <p>
-                                        Confira os valores antes de
-                                        encaminhar para aprovação do cliente.
-                                    </p>
-                                </div>
-
-                                <div className="gf-orcamento-icon">
-                                    R$
-                                </div>
-                            </div>
-
-                            <div className="gf-orcamento-resumo">
-                                <div className="gf-orcamento-linha">
-                                    <span>
-                                        Subtotal de peças e serviços
-                                    </span>
-
-                                    <strong>
-                                        {formatarMoeda(valorBruto)}
-                                    </strong>
-                                </div>
-
-                                <div className="gf-orcamento-linha">
-                                    <span>Desconto</span>
-
-                                    <strong className="gf-orcamento-desconto">
-                                        −{' '}
-                                        {formatarMoeda(
-                                            podeFecharRascunho
-                                                ? descontoValido
-                                                    ? descontoNumerico
-                                                    : 0
-                                                : osDetalhe.desconto
-                                        )}
-                                    </strong>
-                                </div>
-
-                                <div className="gf-orcamento-total">
-                                    <div>
-                                        <span>VALOR FINAL</span>
-
-                                        <small>
-                                            {podeFecharRascunho
-                                                ? 'Atualizado em tempo real'
-                                                : 'Valor do orçamento'}
-                                        </small>
-                                    </div>
-
-                                    <strong>
-                                        {formatarMoeda(
-                                            podeFecharRascunho
-                                                ? valorFinal
-                                                : osDetalhe.valorFinal
-                                        )}
-                                    </strong>
-                                </div>
-                            </div>
-
-                            {podeFecharRascunho && (
-                                <div className="gf-orcamento-edicao">
-                                    <label htmlFor="gf-desconto">
-                                        Aplicar desconto
-                                    </label>
-
-                                    <p>
-                                        Informe o desconto em reais.
-                                        O valor final será recalculado
-                                        automaticamente.
-                                    </p>
-
-                                    <div className="gf-desconto-input-wrapper">
-                                        <span>R$</span>
-
-                                        <input
-                                            id="gf-desconto"
-                                            type="number"
-                                            min="0"
-                                            max={valorBruto}
-                                            step="0.01"
-                                            value={desconto}
-                                            disabled={fechandoRascunho}
-                                            onChange={(e) => {
-                                                setDesconto(
-                                                    e.target.value
-                                                );
-
-                                                setErroFechamento('');
-                                            }}
-                                            placeholder="0.00"
-                                        />
-                                    </div>
-
-                                    {!descontoValido && (
-                                        <span className="gf-desconto-aviso">
-                                            O desconto deve estar entre
-                                            R$ 0,00 e{' '}
-                                            {formatarMoeda(valorBruto)},
-                                            com até duas casas decimais.
-                                        </span>
-                                    )}
-                                </div>
-                            )}
-
-                            {erroFechamento && (
-                                <div
-                                    className="gf-orcamento-feedback gf-feedback-erro"
-                                    role="alert"
-                                >
-                                    {erroFechamento}
-                                </div>
-                            )}
-
-                            {sucessoFechamento && (
-                                <div
-                                    className="gf-orcamento-feedback gf-feedback-sucesso"
-                                    role="status"
-                                >
-                                    {sucessoFechamento}
-                                </div>
-                            )}
-
-                            {podeFecharRascunho ? (
-                                <button
-                                    type="button"
-                                    className="gf-btn-fechar-orcamento"
-                                    onClick={handleFecharRascunho}
-                                    disabled={
-                                        fechandoRascunho ||
-                                        !descontoValido
-                                    }
-                                >
-                                    {fechandoRascunho
-                                        ? 'Fechando orçamento...'
-                                        : '✓ Confirmar fechamento do orçamento'}
-                                </button>
-                            ) : (
-                                <div className="gf-orcamento-bloqueado">
-                                    {osDetalhe.statusOperac ===
-                                    'AGUARDANDO_APROVACAO'
-                                        ? '✓ Orçamento fechado. Aguardando aprovação do cliente.'
-                                        : 'O fechamento do orçamento está disponível apenas para ordens em análise.'}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="gf-os-footer">
-                            <button
-                                type="button"
-                                className="gf-btn-voltar"
-                                onClick={fecharDetalhesOS}
-                                disabled={fechandoRascunho}
-                            >
-                                Fechar detalhes
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
-
-            {/* MODAL DE CRIACAO DE OS */}
-            {isModalOpen && createPortal(
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h2 style={{
-                                color: 'var(--gf-primary-dark)'
-                            }}>
-                                Abrir Nova Ordem de Serviço
-                            </h2>
-
-                            <button
-                                className="btn-close"
-                                onClick={() =>
-                                    setIsModalOpen(false)
-                                }
-                            >
-                                ×
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmit}>
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Veículo (Frota Cadastrada)
-                                </label>
-
-                                <select
-                                    name="veiculoId"
-                                    value={formData.veiculoId}
-                                    onChange={handleChange}
-                                    className="form-input"
-                                    required
-                                >
-                                    <option value="">
-                                        Selecione um veículo...
-                                    </option>
-
-                                    {veiculos.map((v) => (
-                                        <option
-                                            key={v.id}
-                                            value={v.id}
-                                        >
-                                            {v.placa} — {v.marca}{' '}
-                                            {v.modelo}
-
-                                            {v.cliente?.nome
-                                                ? ` (Cliente: ${v.cliente.nome})`
-                                                : ''}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Mecânico Responsável
-                                </label>
-
-                                <select
-                                    name="funcionarioId"
-                                    value={formData.funcionarioId}
-                                    onChange={handleChange}
-                                    className="form-input"
-                                    required
-                                >
-                                    <option value="">
-                                        Selecione o profissional responsável...
-                                    </option>
-
-                                    {funcionarios.map((f) => (
-                                        <option
-                                            key={f.id}
-                                            value={f.id}
-                                        >
-                                            {f.nome} (
-                                            {f.cargo || 'Mecânico'})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Prioridade do Atendimento
-                                </label>
-
-                                <select
-                                    name="prioridade"
-                                    value={formData.prioridade}
-                                    onChange={handleChange}
-                                    className="form-input"
-                                    required
-                                >
-                                    <option value="NORMAL">
-                                        Normal
-                                    </option>
-
-                                    <option value="ALTA">
-                                        Alta
-                                    </option>
-
-                                    <option value="URGENTE">
-                                        Urgente
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Data de Entrada
-                                </label>
-
-                                <input
-                                    type="date"
-                                    name="dataEntrada"
-                                    value={formData.dataEntrada}
-                                    onChange={handleChange}
-                                    className="form-input"
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Previsão de Entrega
-                                </label>
-
-                                <input
-                                    type="date"
-                                    name="previsaoEntrega"
-                                    min={
-                                        formData.dataEntrada || hoje
-                                    }
-                                    value={formData.previsaoEntrega}
-                                    onChange={handleChange}
-                                    className="form-input"
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Relato do Cliente / Diagnóstico Inicial
-                                </label>
-
-                                <textarea
-                                    name="obsDiag"
-                                    rows="3"
-                                    placeholder="Ex: Cliente relata barulho na roda dianteira direita ao frear..."
-                                    value={formData.obsDiag}
-                                    onChange={handleChange}
-                                    className="form-input"
-                                />
-                            </div>
-
-                            <button
-                                type="submit"
-                                className="btn-submit"
-                            >
-                                Gerar Ordem de Serviço
-                            </button>
-                        </form>
-                    </div>
-                </div>,
-                document.body
-            )}
-        </div>
-    );
+          </div>,
+          document.body,
+        )}
+
+      {modalNovaOS &&
+        createPortal(
+          <div
+            className="modal-overlay gf-overlay"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget && !salvandoOS) {
+                setModalNovaOS(false);
+              }
+            }}
+          >
+            <div
+              className="modal-content gf-os-modal gf-nova-os-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="gf-titulo-nova-os"
+            >
+              <header className="gf-modal-cabecalho">
+                <div>
+                  <span className="gf-os-eyebrow">NOVO ATENDIMENTO</span>
+                  <h2 id="gf-titulo-nova-os">Abrir Ordem de Serviço</h2>
+                  <p>Preencha os dados para registrar o atendimento.</p>
+                </div>
+
+                <button
+                  type="button"
+                  className="gf-modal-fechar"
+                  disabled={salvandoOS}
+                  onClick={() => setModalNovaOS(false)}
+                  aria-label="Fechar formulário"
+                >
+                  ×
+                </button>
+              </header>
+
+              <form onSubmit={criarOS} className="gf-form-nova-os">
+                <div className="gf-form-campo gf-form-largo">
+                  <label htmlFor="gf-veiculo">Veículo cadastrado</label>
+                  <select
+                    id="gf-veiculo"
+                    required
+                    value={formData.veiculoId}
+                    onChange={(e) =>
+                      setFormData((anterior) => ({
+                        ...anterior,
+                        veiculoId: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Selecione o veículo...</option>
+                    {veiculos.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.placa} — {v.marca} {v.modelo}
+                        {v.cliente?.nome ? ` (${v.cliente.nome})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="gf-form-campo gf-form-largo">
+                  <label htmlFor="gf-mecanico">Mecânico responsável</label>
+                  <select
+                    id="gf-mecanico"
+                    required
+                    value={formData.funcionarioId}
+                    onChange={(e) =>
+                      setFormData((anterior) => ({
+                        ...anterior,
+                        funcionarioId: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Selecione o profissional...</option>
+                    {funcionarios.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.nome} — {f.cargo || "Mecânico"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="gf-form-campo">
+                  <label htmlFor="gf-prioridade-nova">Prioridade</label>
+                  <select
+                    id="gf-prioridade-nova"
+                    value={formData.prioridade}
+                    onChange={(e) =>
+                      setFormData((anterior) => ({
+                        ...anterior,
+                        prioridade: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="NORMAL">Normal</option>
+                    <option value="ALTA">Alta</option>
+                    <option value="URGENTE">Urgente</option>
+                  </select>
+                </div>
+
+                <div className="gf-form-campo">
+                  <label htmlFor="gf-data-entrada">Data de entrada</label>
+                  <input
+                    id="gf-data-entrada"
+                    type="date"
+                    required
+                    value={formData.dataEntrada}
+                    onChange={(e) =>
+                      setFormData((anterior) => ({
+                        ...anterior,
+                        dataEntrada: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="gf-form-campo">
+                  <label htmlFor="gf-previsao">Previsão de entrega</label>
+                  <input
+                    id="gf-previsao"
+                    type="date"
+                    required
+                    min={formData.dataEntrada}
+                    value={formData.previsaoEntrega}
+                    onChange={(e) =>
+                      setFormData((anterior) => ({
+                        ...anterior,
+                        previsaoEntrega: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="gf-form-campo gf-form-largo">
+                  <label htmlFor="gf-diagnostico">
+                    Relato do cliente / diagnóstico inicial
+                  </label>
+                  <textarea
+                    id="gf-diagnostico"
+                    rows="4"
+                    placeholder="Descreva o problema relatado..."
+                    value={formData.obsDiag}
+                    onChange={(e) =>
+                      setFormData((anterior) => ({
+                        ...anterior,
+                        obsDiag: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="gf-form-largo">
+                  <Aviso>{feedbackNovaOS}</Aviso>
+                </div>
+
+                <div className="gf-form-acoes gf-form-largo">
+                  <button
+                    type="button"
+                    className="gf-btn-secundario"
+                    disabled={salvandoOS}
+                    onClick={() => setModalNovaOS(false)}
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="gf-btn-primario"
+                    disabled={salvandoOS}
+                  >
+                    {salvandoOS ? "Criando ordem..." : "Criar Ordem de Serviço"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </main>
+  );
 }

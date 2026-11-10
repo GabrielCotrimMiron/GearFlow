@@ -114,14 +114,52 @@ public class OrdemServico {
     }
 
     public void avancarStatus(StatusOperacional novoStatus) {
+
         verificarSeFinalizada();
+
+        if (novoStatus == null) {
+            throw new IllegalArgumentException(
+                    "O novo status deve ser informado.");
+        }
+
+        if (novoStatus == StatusOperacional.EM_EXECUCAO ||
+                novoStatus == StatusOperacional.ORCAMENTO_REJEITADO) {
+
+            throw new IllegalStateException(
+                    "Este status exige uma decisao do cliente.");
+        }
 
         this.statusOperac = novoStatus;
     }
 
+    // RF14 - Aprovar orcamento
+    public void aprovarOrcamento() {
+
+        if (this.statusOperac != StatusOperacional.AGUARDANDO_APROVACAO) {
+
+            throw new IllegalStateException(
+                    "A OS nao esta aguardando aprovacao.");
+        }
+
+        this.statusOperac = StatusOperacional.EM_EXECUCAO;
+    }
+
+    // RF14 - Rejeitar orcamento
+    public void rejeitarOrcamento() {
+
+        if (this.statusOperac != StatusOperacional.AGUARDANDO_APROVACAO) {
+
+            throw new IllegalStateException(
+                    "A OS nao esta aguardando aprovacao.");
+        }
+
+        this.statusOperac = StatusOperacional.ORCAMENTO_REJEITADO;
+    }
+
     public void verificarSeFinalizada() {
         if (this.statusOperac == StatusOperacional.FINALIZADA ||
-                this.statusOperac == StatusOperacional.AGUARDANDO_APROVACAO) {
+                this.statusOperac == StatusOperacional.AGUARDANDO_APROVACAO ||
+                this.statusOperac == StatusOperacional.ORCAMENTO_REJEITADO) {
 
             throw new IllegalStateException(
                     "Esta ordem de servico nao pode ser alterada neste status.");
@@ -149,13 +187,48 @@ public class OrdemServico {
     }
 
     public void setStatusOperac(StatusOperacional statusOperac) {
-        verificarSeFinalizada();
-        this.statusOperac = statusOperac;
+
+        if (this.statusOperac == null &&
+                statusOperac == StatusOperacional.EM_ANALISE) {
+
+            this.statusOperac = statusOperac;
+            return;
+        }
+
+        throw new IllegalStateException(
+                "Alteracao direta de status nao permitida.");
     }
 
-    public void setStatusPag(StatusPagamento statusPag) {
-        verificarSeFinalizada();
-        this.statusPag = statusPag;
+    public void setStatusPag(StatusPagamento novoStatus) {
+
+        if (novoStatus == null) {
+            throw new IllegalArgumentException(
+                    "O status de pagamento deve ser informado.");
+        }
+
+        if (this.statusOperac != StatusOperacional.FINALIZADA) {
+            throw new IllegalStateException(
+                    "Somente ordens finalizadas podem ter o pagamento atualizado.");
+        }
+
+        if (this.statusPag == StatusPagamento.ESTORNADO) {
+            throw new IllegalStateException(
+                    "Uma ordem estornada nao pode ter seu pagamento alterado.");
+        }
+
+        if (novoStatus == StatusPagamento.ESTORNADO
+                && this.statusPag != StatusPagamento.PAGO) {
+            throw new IllegalStateException(
+                    "Somente pagamentos realizados podem ser estornados.");
+        }
+
+        if (novoStatus == StatusPagamento.PAGO
+                && this.statusPag == StatusPagamento.PAGO) {
+            throw new IllegalStateException(
+                    "Esta ordem ja esta marcada como paga.");
+        }
+
+        this.statusPag = novoStatus;
     }
 
     public void setObsDiag(String obsDiag) {

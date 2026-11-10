@@ -1,18 +1,22 @@
 
 package com.gearflow.gearflow_system;
 
-import com.gearflow.gearflow_system.DTOs.OrcamentoDTO;
+import com.gearflow.gearflow_system.DTOs.AcompanhamentoDTO;
 import com.gearflow.gearflow_system.Models.Cliente;
 import com.gearflow.gearflow_system.Models.OrdemServico;
+import com.gearflow.gearflow_system.Models.StatusOperacional;
 import com.gearflow.gearflow_system.Models.Veiculo;
+import com.gearflow.gearflow_system.Repositories.FuncionarioRepository;
+import com.gearflow.gearflow_system.Repositories.ItemOSRepository;
 import com.gearflow.gearflow_system.Repositories.OrdemServicoRepository;
+import com.gearflow.gearflow_system.Repositories.VeiculoRepository;
 import com.gearflow.gearflow_system.Services.OrdemServicoService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
@@ -20,115 +24,109 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class OrcamentoServiceTest {
+class OrdemServicoServiceTest {
 
     private OrdemServicoRepository repository;
     private OrdemServicoService service;
+    private Authentication authentication;
 
     @BeforeEach
-    void configurar() {
+    void preparar() {
         repository = mock(OrdemServicoRepository.class);
-        service = new OrdemServicoService(repository);
+        authentication = mock(Authentication.class);
+
+        ItemOSRepository itemOSRepository =
+                mock(ItemOSRepository.class);
+
+        VeiculoRepository veiculoRepository =
+                mock(VeiculoRepository.class);
+
+        FuncionarioRepository funcionarioRepository =
+                mock(FuncionarioRepository.class);
+
+        service = new OrdemServicoService(
+                itemOSRepository,
+                repository,
+                veiculoRepository,
+                funcionarioRepository);
+
+        // Simula um cliente autenticado.
+        when(authentication.getName())
+                .thenReturn("cliente@teste.com");
+
+        when(authentication.isAuthenticated())
+                .thenReturn(true);
     }
 
-    private OrdemServico criarOrdem(String emailCliente) {
-        Cliente cliente = mock(Cliente.class);
-        Veiculo veiculo = mock(Veiculo.class);
+    @Test
+    void deveRetornarAcompanhamentoDaPropriaOrdem() {
+        Cliente cliente = new Cliente();
+        cliente.setEmail("cliente@teste.com");
+
+        Veiculo veiculo = new Veiculo();
+        veiculo.setCliente(cliente);
+
         OrdemServico ordem = new OrdemServico();
-
-        when(cliente.getEmail()).thenReturn(emailCliente);
-        when(veiculo.getCliente()).thenReturn(cliente);
-
         ordem.setVeiculo(veiculo);
 
-        return ordem;
-    }
+        ReflectionTestUtils.setField(
+                ordem,
+                "statusOperac",
+                StatusOperacional.EM_EXECUCAO);
 
-    private Authentication autenticar(String email) {
-        return new UsernamePasswordAuthenticationToken(
-                email,
-                null,
-                org.springframework.security.core.authority.AuthorityUtils
-                        .createAuthorityList("ROLE_USER"));
-    }
+        when(repository.findById(1))
+                .thenReturn(Optional.of(ordem));
 
-    @Test
-    void clientePodeConsultarSeuOrcamento() {
-        OrdemServico ordem = criarOrdem("cliente@teste.com");
-
-        when(repository.findById(1)).thenReturn(Optional.of(ordem));
-
-        OrcamentoDTO resultado = service.buscarOrcamento(
-                1, autenticar("cliente@teste.com"));
+        AcompanhamentoDTO resultado =
+                service.buscarAcompanhamento(1, authentication);
 
         assertNotNull(resultado);
-        assertEquals(0, resultado.itens().size());
-        assertEquals(0, resultado.valorTotal().signum());
-    }
-
-    @Test
-    void clienteNaoPodeConsultarOrcamentoDeOutroCliente() {
-        OrdemServico ordem = criarOrdem("outro@teste.com");
-
-        when(repository.findById(1)).thenReturn(Optional.of(ordem));
-
-        ResponseStatusException erro = assertThrows(
-                ResponseStatusException.class,
-                () -> service.buscarOrcamento(
-                        1, autenticar("cliente@teste.com")));
-
-        assertEquals(HttpStatus.FORBIDDEN, erro.getStatusCode());
-    }
-
-    @Test
-    void ordemInexistenteRetorna404() {
-        when(repository.findById(999)).thenReturn(Optional.empty());
-
-        ResponseStatusException erro = assertThrows(
-                ResponseStatusException.class,
-                () -> service.buscarOrcamento(
-                        999, autenticar("cliente@teste.com")));
-
-        assertEquals(HttpStatus.NOT_FOUND, erro.getStatusCode());
-    }
-
-    @Test
-    void deveCalcularTotalDoOrcamentoComPecasEServicos() {
-        OrdemServico ordem = criarOrdem("cliente@teste.com");
-
-        com.gearflow.gearflow_system.Models.Peca peca = mock(com.gearflow.gearflow_system.Models.Peca.class);
-
-        com.gearflow.gearflow_system.Models.Servico servico = mock(com.gearflow.gearflow_system.Models.Servico.class);
-
-        when(peca.getId()).thenReturn(10);
-        when(peca.getDescricao()).thenReturn("Filtro de oleo");
-        when(peca.getQtd()).thenReturn(2);
-        when(peca.getValorUni()).thenReturn(
-                new java.math.BigDecimal("35.00"));
-
-        when(servico.getId()).thenReturn(20);
-        when(servico.getDescricao()).thenReturn("Troca de oleo");
-        when(servico.getQtd()).thenReturn(1);
-        when(servico.getValorUni()).thenReturn(
-                new java.math.BigDecimal("80.00"));
-
-        ordem.adicionarItem(peca);
-        ordem.adicionarItem(servico);
-
-        when(repository.findById(1)).thenReturn(Optional.of(ordem));
-
-        OrcamentoDTO resultado = service.buscarOrcamento(
-                1, autenticar("cliente@teste.com"));
-
-        assertEquals(2, resultado.itens().size());
 
         assertEquals(
-                0,
-                new java.math.BigDecimal("150.00")
-                        .compareTo(resultado.valorTotal()));
+                StatusOperacional.EM_EXECUCAO,
+                resultado.getStatus());
 
-        assertEquals("PECA", resultado.itens().get(0).tipo());
-        assertEquals("SERVICO", resultado.itens().get(1).tipo());
+        assertEquals(
+                "Nao atribuido",
+                resultado.getMecanicoResponsavel());
     }
 
+    @Test
+    void deveRetornar403QuandoOrdemPertenceAOutroCliente() {
+        Cliente outroCliente = new Cliente();
+        outroCliente.setEmail("outro@teste.com");
+
+        Veiculo veiculo = new Veiculo();
+        veiculo.setCliente(outroCliente);
+
+        OrdemServico ordem = new OrdemServico();
+        ordem.setVeiculo(veiculo);
+
+        when(repository.findById(2))
+                .thenReturn(Optional.of(ordem));
+
+        ResponseStatusException erro = assertThrows(
+                ResponseStatusException.class,
+                () -> service.buscarAcompanhamento(
+                        2, authentication));
+
+        assertEquals(
+                HttpStatus.FORBIDDEN,
+                erro.getStatusCode());
+    }
+
+    @Test
+    void deveRetornar404QuandoOrdemNaoExiste() {
+        when(repository.findById(999))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException erro = assertThrows(
+                ResponseStatusException.class,
+                () -> service.buscarAcompanhamento(
+                        999, authentication));
+
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                erro.getStatusCode());
+    }
 }

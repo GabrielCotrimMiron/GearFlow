@@ -8,6 +8,7 @@ import GestaoPecas from "./pages/GestaoPecas.jsx";
 import Servicos from "./pages/Servicos.jsx";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import GestaoOrdensServico from "./pages/GestaoOrdensServico.jsx";
+import DashboardFinanceiro from "./pages/DashboardFinanceiro.jsx";
 import MeusVeiculos from "./pages/VeiculosCliente.jsx";
 import GestaoVeiculos from "./pages/GestaoVeiculos";
 import AgendamentoCliente from "./pages/Agendamento";
@@ -69,6 +70,29 @@ function App() {
               subtitulo="Acompanhe os atendimentos, revise orçamentos e gerencie as ordens da oficina"
             >
               <GestaoOrdensServico />
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/financeiro"
+          element={
+            <DashboardLayout
+              titulo="Gestão Financeira"
+              subtitulo="Controle de receitas, despesas e fluxo de caixa"
+            >
+              <DashboardFinanceiro />
+            </DashboardLayout>
+          }
+        />
+
+        <Route
+          path="/financeiro"
+          element={
+            <DashboardLayout
+              titulo="Dashboard Financeira"
+              subtitulo="Indicadores, receitas e desempenho financeiro da oficina"
+            >
+              <DashboardFinanceiro />
             </DashboardLayout>
           }
         />
