@@ -8,6 +8,8 @@ import GestaoPecas from "./pages/GestaoPecas.jsx";
 import Servicos from "./pages/Servicos.jsx";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import GestaoOrdensServico from "./pages/GestaoOrdensServico.jsx";
+import MeusVeiculos from "./pages/VeiculosCliente.jsx";
+import GestaoVeiculos from "./pages/GestaoVeiculos";
 
 function App() {
   return (
@@ -68,6 +70,8 @@ function App() {
             </DashboardLayout>
           }
         />
+          <Route path="/cliente/veiculos" element={<MeusVeiculos />} />
+          <Route path="/veiculos" element={<GestaoVeiculos />} />
       </Routes>
     </Router>
   );

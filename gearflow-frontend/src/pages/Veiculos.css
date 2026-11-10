@@ -1,0 +1,365 @@
+/* GEARFLOW — MÓDULO DE VEÍCULOS (CLIENTE E GESTÃO) */
+
+.veiculos-pagina {
+    width: 100%;
+    color: #2a4454;
+}
+
+.veiculos-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding: 24px;
+    border: 1px solid #e6edef;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.veiculos-eyebrow {
+    display: block;
+    color: #319795;
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+}
+
+.veiculos-topo h2 {
+    color: #2a4454;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+}
+
+.veiculos-topo p {
+    margin-top: 6px;
+    color: #718096;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.veiculos-acoes-topo {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* BOTÕES E FILTROS */
+
+.veiculos-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.veiculos-btn-primario {
+    background: #278f8b;
+    color: #fff;
+}
+
+.veiculos-btn-primario:hover {
+    background: #217874;
+}
+
+.veiculos-btn-secundario {
+    background: #fff;
+    color: #405a69;
+    border-color: #dce5e8;
+}
+
+.veiculos-btn-secundario:hover {
+    background: #f2f8f8;
+    border-color: #38b2ac;
+}
+
+.veiculos-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.veiculos-barra-busca {
+    margin-bottom: 20px;
+}
+
+.veiculos-input-busca {
+    width: 100%;
+    max-width: 420px;
+    padding: 11px 14px;
+    border: 1px solid #dce5e8;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #2a4454;
+    background: #fff;
+}
+
+/* FORMULÁRIO DE CADASTRO */
+
+.veiculos-form-card {
+    margin-bottom: 24px;
+    padding: 24px;
+    border: 1px solid #cbe7e5;
+    border-radius: 14px;
+    background: #f8fcfb;
+}
+
+.veiculos-form-card h3 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: #2a4454;
+}
+
+.veiculos-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.veiculos-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.veiculos-campo label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #405a69;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.veiculos-campo input {
+    padding: 10px 12px;
+    border: 1px solid #dce5e8;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #2a4454;
+    background: #fff;
+}
+
+.veiculos-form-rodape {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* GRID DE CARDS DE VEÍCULOS */
+
+.veiculos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 16px;
+}
+
+.veiculo-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid #e6edef;
+    border-radius: 13px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(42, 68, 84, 0.025);
+}
+
+.veiculo-card-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.veiculo-placa-badge {
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: #edf3fa;
+    border: 1px solid #d0e1f2;
+    color: #2a4454;
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.veiculo-ano-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #718096;
+    background: #f2f6f7;
+    padding: 4px 9px;
+    border-radius: 20px;
+}
+
+.veiculo-card-corpo strong {
+    display: block;
+    font-size: 16px;
+    color: #2a4454;
+    margin-bottom: 6px;
+}
+
+.veiculo-detalhes-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: #718096;
+}
+
+/* ALERTAS E VAZIO */
+
+.veiculos-alerta-erro {
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    border: 1px solid #f2d0d0;
+    border-radius: 10px;
+    background: #fff0f0;
+    color: #a93232;
+    font-size: 12px;
+}
+
+.veiculos-alerta-sucesso {
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    border: 1px solid #b7e4d8;
+    border-radius: 10px;
+    background: #ebfaf5;
+    color: #1e6f56;
+    font-size: 12px;
+}
+
+.veiculos-vazio {
+    padding: 48px 20px;
+    text-align: center;
+    border: 1px dashed #dce5e8;
+    border-radius: 14px;
+    background: #fff;
+    color: #718096;
+}
+
+/* MODAL DE HISTÓRICO */
+
+.veiculos-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(24, 39, 48, 0.55);
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.veiculos-modal {
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.veiculos-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #edf1f2;
+    margin-bottom: 16px;
+}
+
+.veiculos-historico-item {
+    padding: 14px;
+    border: 1px solid #e6edef;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background: #fafcfc;
+}
+
+.veiculos-historico-item strong {
+    display: block;
+    font-size: 13px;
+    color: #2a4454;
+    margin-bottom: 4px;
+}
+
+.veiculos-historico-item span {
+    font-size: 12px;
+    color: #718096;
+}
+
+/* MODAL FLUTUANTE DE CADASTRO DE VEÍCULO */
+
+.veiculos-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(24, 39, 48, 0.55);
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.veiculos-modal-cadastro {
+    width: 100%;
+    max-width: 620px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.veiculos-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #edf1f2;
+    margin-bottom: 20px;
+}
+
+.veiculos-modal-header h3 {
+    color: #2a4454;
+    font-size: 18px;
+    font-weight: 750;
+}
+
+.veiculos-modal-fechar {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: #8797a1;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+.veiculos-modal-fechar:hover {
+    color: #2a4454;
+}
+
+/* Garante que o grid do form fique perfeito dentro do modal */
+.veiculos-modal-cadastro .veiculos-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 600px) {
+    .veiculos-modal-cadastro .veiculos-form-grid {
+        grid-template-columns: 1fr;
+    }
+}

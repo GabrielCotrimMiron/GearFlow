@@ -5,7 +5,7 @@ import "./DashboardLayout.css";
 
 const icones = {
   painel: "▦",
-  carro: "🚗",
+  carro: "⛟",
   ordem: "🛠",
   usuario: "◉",
   equipe: "♙",
@@ -29,7 +29,7 @@ export default function DashboardLayout({
   const links = cliente
     ? [
         { rota: "/DashboardCliente", texto: "Visão Geral", icone: "painel" },
-        { rota: "/meus-veiculos", texto: "Meus Veículos", icone: "carro" },
+        { rota: "/cliente/veiculos", texto: "Meus Veículos", icone: "carro" },
         { rota: "/minhas-os", texto: "Ordens de Serviço", icone: "ordem" },
         { rota: "/meu-perfil", texto: "Meu Perfil", icone: "usuario" },
       ]
@@ -38,6 +38,11 @@ export default function DashboardLayout({
         { rota: "/equipe", texto: "Gestão de Equipe", icone: "equipe" },
         { rota: "/pecas", texto: "Gestão de Peças", icone: "pecas" },
         { rota: "/servicos", texto: "Catálogo de Serviços", icone: "servicos" },
+        {
+          rota: "/veiculos",
+          texto: "Veículos",
+          icone: "carro",
+        },
         {
           rota: "/ordens-servico",
           texto: "Gestão de Ordens de Serviço",

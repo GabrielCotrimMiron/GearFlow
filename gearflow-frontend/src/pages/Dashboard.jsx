@@ -156,7 +156,7 @@ export default function Dashboard() {
       const autorizacao = gerarAutorizacaoBasica();
 
       const requisicoes = [
-        api.get("/ordens-servico/fila-prioridade", {
+        api.get("/ordens-servic", {
           headers: {
             Authorization: autorizacao,
           },
@@ -208,11 +208,11 @@ export default function Dashboard() {
   const { ordens, pecas, servicos, funcionarios } = dados;
 
   const ordensEmExecucao = ordens.filter(
-    (ordem) => ordem.status === "EM_EXECUCAO",
+    (ordem) => ordem.statusOperac === "EM_EXECUCAO",
   ).length;
 
   const ordensFinalizadas = ordens.filter(
-    (ordem) => ordem.status === "FINALIZADA",
+    (ordem) => ordem.statusOperac === "FINALIZADA",
   ).length;
 
   const pecasEstoqueBaixo = pecas.filter(
@@ -226,7 +226,7 @@ export default function Dashboard() {
   );
 
   const ordensPrioritarias = [...ordens]
-    .filter((ordem) => ordem.status !== "FINALIZADA")
+    .filter((ordem) => ordem.statusOperac !== "FINALIZADA")
     .sort((a, b) => {
       const pesoA = PESO_PRIORIDADE[a.prioridade] ?? 3;
       const pesoB = PESO_PRIORIDADE[b.prioridade] ?? 3;
@@ -346,7 +346,7 @@ export default function Dashboard() {
                     <span className="dashboard-ordem-icone">▤</span>
                     <div>
                       <strong>Ordem de Serviço #{ordem.id}</strong>
-                      <span>{formatarStatus(ordem.status)}</span>
+                      <span>{formatarStatus(ordem.statusOperac)}</span>
                     </div>
                   </div>
 
