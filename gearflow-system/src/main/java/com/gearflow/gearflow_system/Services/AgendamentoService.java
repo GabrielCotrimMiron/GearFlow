@@ -12,6 +12,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.gearflow.gearflow_system.Models.OrdemServico;
+import com.gearflow.gearflow_system.Repositories.OrdemServicoRepository;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -25,13 +27,15 @@ public class AgendamentoService {
     private final AgendamentoRepository agendamentoRepository;
     private final ClienteRepository clienteRepository;
     private final VeiculoRepository veiculoRepository;
+    private final OrdemServicoRepository ordemServicoRepository;
 
     public AgendamentoService(AgendamentoRepository agendamentoRepository,
                               ClienteRepository clienteRepository,
-                              VeiculoRepository veiculoRepository) {
+                              VeiculoRepository veiculoRepository, OrdemServicoRepository ordemServicoRepository) {
         this.agendamentoRepository = agendamentoRepository;
         this.clienteRepository = clienteRepository;
         this.veiculoRepository = veiculoRepository;
+        this.ordemServicoRepository = ordemServicoRepository;
     }
 
     @Transactional(readOnly = true)
@@ -107,5 +111,55 @@ public class AgendamentoService {
     @Transactional(readOnly = true)
     public List<Agendamento> listarMeusAgendamentos(Authentication auth) {
         return agendamentoRepository.findByClienteEmailIgnoreCaseOrderByDataAgendamentoDescHorarioDesc(auth.getName());
+    }
+
+    @Transactional
+    public Agendamento aprovarAgendamento(Integer id) {
+        Agendamento agendamento = agendamentoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Agendamento não encontrado."));
+
+        if (agendamento.getStatus() != StatusAgendamento.PENDENTE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Apenas agendamentos pendentes podem ser aprovados.");
+        }
+
+        OrdemServico novaOs = new OrdemServico();
+
+        // ATENÇÃO: Define o status operacional ANTES do veículo para não travar na validação
+        novaOs.setStatusOperac(com.gearflow.gearflow_system.Models.StatusOperacional.EM_ANALISE);
+
+        // Associa o veículo (que já tem a relação com o cliente no banco)
+        novaOs.setVeiculo(agendamento.getVeiculo());
+
+        // Define a data de entrada
+        novaOs.setDataEntrada(agendamento.getDataAgendamento());
+
+        // Aproveita o motivo relatado pelo cliente para iniciar a observação
+        String observacao = "OS gerada via Agendamento. Horário marcado: " + agendamento.getHorario().toString();
+        if (agendamento.getMotivo() != null && !agendamento.getMotivo().isBlank()) {
+            observacao += " | Motivo do cliente: " + agendamento.getMotivo();
+        }
+        novaOs.setObsDiag(observacao);
+
+        // Salva a OS no banco
+        novaOs = ordemServicoRepository.save(novaOs);
+
+        // 2. Atualiza o Agendamento com o status CONFIRMADO e vincula a nova OS
+        agendamento.setStatus(StatusAgendamento.CONFIRMADO);
+        agendamento.setOrdemServico(novaOs);
+
+        return agendamentoRepository.save(agendamento);
+    }
+
+    @Transactional
+    public Agendamento cancelarAgendamento(Integer id) {
+        Agendamento agendamento = agendamentoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Agendamento não encontrado."));
+
+        if (agendamento.getStatus() != StatusAgendamento.PENDENTE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Apenas agendamentos pendentes podem ser cancelados.");
+        }
+
+        agendamento.setStatus(StatusAgendamento.CANCELADO);
+        return agendamentoRepository.save(agendamento);
     }
 }

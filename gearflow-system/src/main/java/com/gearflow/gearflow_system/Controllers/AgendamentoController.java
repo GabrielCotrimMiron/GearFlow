@@ -6,14 +6,14 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 
 @RestController
 @RequestMapping("/agendamentos")
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"},methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PATCH, RequestMethod.OPTIONS})
 public class AgendamentoController {
 
     private final AgendamentoService agendamentoService;
@@ -42,5 +42,15 @@ public class AgendamentoController {
     @GetMapping("/meus")
     public List<Agendamento> listarMeusAgendamentos(Authentication authentication) {
         return agendamentoService.listarMeusAgendamentos(authentication);
+    }
+
+    @PutMapping("/{id}/aprovar")
+    public Agendamento aprovarAgendamento(@PathVariable Integer id) {
+        return agendamentoService.aprovarAgendamento(id);
+    }
+
+    @PutMapping("/{id}/cancelar")
+    public Agendamento cancelarAgendamento(@PathVariable Integer id) {
+        return agendamentoService.cancelarAgendamento(id);
     }
 }
