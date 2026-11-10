@@ -9,6 +9,7 @@ const icones = {
   ordem: "🛠",
   usuario: "◉",
   equipe: "♙",
+  agendamento: "🗓",
   pecas: "⚙",
   servicos: "☷",
   prioridade: "⚑",
@@ -31,6 +32,7 @@ export default function DashboardLayout({
         { rota: "/DashboardCliente", texto: "Visão Geral", icone: "painel" },
         { rota: "/cliente/veiculos", texto: "Meus Veículos", icone: "carro" },
         { rota: "/minhas-os", texto: "Ordens de Serviço", icone: "ordem" },
+        { rota: "/cliente/agendamentos", texto: "Agendar Consulta", icone: "agendamento" },
         { rota: "/meu-perfil", texto: "Meu Perfil", icone: "usuario" },
       ]
     : [
@@ -48,6 +50,7 @@ export default function DashboardLayout({
           texto: "Gestão de Ordens de Serviço",
           icone: "gestaoOS",
         },
+        { rota: "/agendamentos", texto: "Agendamentos", icone: "agendamento" },
       ];
 
   function handleLogout() {

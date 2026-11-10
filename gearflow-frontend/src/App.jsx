@@ -10,6 +10,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import GestaoOrdensServico from "./pages/GestaoOrdensServico.jsx";
 import MeusVeiculos from "./pages/VeiculosCliente.jsx";
 import GestaoVeiculos from "./pages/GestaoVeiculos";
+import AgendamentoCliente from "./pages/Agendamento";
+import GestaoAgendamentos from "./pages/GestaoAgendamento";
 
 function App() {
   return (
@@ -72,6 +74,8 @@ function App() {
         />
           <Route path="/cliente/veiculos" element={<MeusVeiculos />} />
           <Route path="/veiculos" element={<GestaoVeiculos />} />
+          <Route path="/cliente/agendamentos" element={<AgendamentoCliente />} />
+          <Route path="/agendamentos" element={<GestaoAgendamentos />} />
       </Routes>
     </Router>
   );
