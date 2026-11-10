@@ -199,9 +199,36 @@ public class OrdemServico {
                 "Alteracao direta de status nao permitida.");
     }
 
-    public void setStatusPag(StatusPagamento statusPag) {
-        verificarSeFinalizada();
-        this.statusPag = statusPag;
+    public void setStatusPag(StatusPagamento novoStatus) {
+
+        if (novoStatus == null) {
+            throw new IllegalArgumentException(
+                    "O status de pagamento deve ser informado.");
+        }
+
+        if (this.statusOperac != StatusOperacional.FINALIZADA) {
+            throw new IllegalStateException(
+                    "Somente ordens finalizadas podem ter o pagamento atualizado.");
+        }
+
+        if (this.statusPag == StatusPagamento.ESTORNADO) {
+            throw new IllegalStateException(
+                    "Uma ordem estornada nao pode ter seu pagamento alterado.");
+        }
+
+        if (novoStatus == StatusPagamento.ESTORNADO
+                && this.statusPag != StatusPagamento.PAGO) {
+            throw new IllegalStateException(
+                    "Somente pagamentos realizados podem ser estornados.");
+        }
+
+        if (novoStatus == StatusPagamento.PAGO
+                && this.statusPag == StatusPagamento.PAGO) {
+            throw new IllegalStateException(
+                    "Esta ordem ja esta marcada como paga.");
+        }
+
+        this.statusPag = novoStatus;
     }
 
     public void setObsDiag(String obsDiag) {
