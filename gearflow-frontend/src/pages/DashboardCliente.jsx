@@ -3,12 +3,11 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
-import {
-  gerarAutorizacaoBasica,
-  obterCredenciais,
-} from "../services/clienteAuth";
 import "./DashboardCliente.css";
 import "./DashboardClienteRF14.css";
+import "./ClienteRefresh.css";
+import AlertasPreventivos from "./AlertasPreventivos";
+import PainelClienteDetalhes from "./PainelClienteDetalhes";
 
 function formatarMoeda(valor) {
   return Number(valor ?? 0).toLocaleString("pt-BR", {
@@ -357,10 +356,13 @@ function ModalOrcamento({
   );
 }
 
-export default function DashboardCliente() {
+export default function DashboardCliente({ modo = "visao-geral" }) {
+  const exibindoOrdens = modo === "ordens";
   const navigate = useNavigate();
 
   const [ordens, setOrdens] = useState([]);
+  const [veiculos, setVeiculos] = useState([]);
+  const [agendamentos, setAgendamentos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
   const [erro, setErro] = useState("");
@@ -376,19 +378,13 @@ export default function DashboardCliente() {
   const requisicaoOrcamento = useRef(0);
 
   useEffect(() => {
-    if (!obterCredenciais()) {
-      navigate("/", { replace: true });
-      return;
-    }
 
     let ativo = true;
 
     async function buscarOrdens() {
       try {
         const response = await api.get("/ordens-servico/minhas", {
-          headers: {
-            Authorization: gerarAutorizacaoBasica(),
-          },
+          headers: {},
         });
 
         if (ativo) {
@@ -409,6 +405,8 @@ export default function DashboardCliente() {
     }
 
     buscarOrdens();
+    api.get("/veiculos/meus").then(r => { if (ativo) setVeiculos(Array.isArray(r.data) ? r.data : []); }).catch(console.error);
+    api.get("/agendamentos/meus").then(r => { if (ativo) setAgendamentos(Array.isArray(r.data) ? r.data : []); }).catch(console.error);
 
     return () => {
       ativo = false;
@@ -423,9 +421,7 @@ export default function DashboardCliente() {
 
     try {
       const response = await api.get("/ordens-servico/minhas", {
-        headers: {
-          Authorization: gerarAutorizacaoBasica(),
-        },
+        headers: {},
       });
 
       setOrdens(Array.isArray(response.data) ? response.data : []);
@@ -457,9 +453,7 @@ export default function DashboardCliente() {
 
     try {
       const response = await api.get(`/ordens-servico/${ordem.id}/orcamento`, {
-        headers: {
-          Authorization: gerarAutorizacaoBasica(),
-        },
+        headers: {},
       });
 
       if (identificador === requisicaoOrcamento.current) {
@@ -493,16 +487,16 @@ export default function DashboardCliente() {
 
     try {
       await api.put(`/ordens-servico/${id}/${decisao}`, null, {
-        headers: { Authorization: gerarAutorizacaoBasica() },
+        headers: {},
       });
 
       // Recarrega os dados do servidor; não presume que a transição ocorreu localmente.
       const [respostaOrcamento, respostaOrdens] = await Promise.all([
         api.get(`/ordens-servico/${id}/orcamento`, {
-          headers: { Authorization: gerarAutorizacaoBasica() },
+          headers: {},
         }),
         api.get("/ordens-servico/minhas", {
-          headers: { Authorization: gerarAutorizacaoBasica() },
+          headers: {},
         }),
       ]);
 
@@ -531,17 +525,11 @@ export default function DashboardCliente() {
     }
   }
 
-  const emAndamento = ordens.filter(
-    (ordem) => ordem.status === "EM_EXECUCAO",
-  ).length;
 
   const aguardando = ordens.filter(
     (ordem) => ordem.status === "AGUARDANDO_APROVACAO",
   ).length;
 
-  const finalizadas = ordens.filter(
-    (ordem) => ordem.status === "FINALIZADA",
-  ).length;
 
   const ordensFiltradas = ordens.filter((ordem) => {
     if (filtro === "TODAS") return true;
@@ -553,51 +541,21 @@ export default function DashboardCliente() {
 
   return (
     <DashboardLayout
-      titulo="Minha Oficina"
-      subtitulo="Acompanhe seus veículos e consulte seus orçamentos."
+      titulo={exibindoOrdens ? "Minhas Ordens de Serviço" : "Minha Oficina"}
+      subtitulo={exibindoOrdens
+        ? "Consulte os atendimentos e aprove seus orçamentos em um só lugar."
+        : "Acompanhe seus veículos, revisões e agendamentos."}
       tipoUsuario="CLIENTE"
     >
       <div className="cliente-pagina">
-        <section className="cliente-boas-vindas">
-          <div>
-            <span className="cliente-eyebrow">ÁREA EXCLUSIVA DO CLIENTE</span>
-            <h2>Seu veículo, sempre acompanhado.</h2>
-            <p>
-              Consulte suas ordens de serviço, acompanhe o andamento dos reparos
-              e visualize seus orçamentos em um só lugar.
-            </p>
-          </div>
-          <span className="cliente-boas-vindas-icone" aria-hidden="true">
-            🚘
-          </span>
-        </section>
 
-        <section className="cliente-indicadores">
-          <div className="cliente-indicador">
-            <span className="cliente-indicador-icone azul">▤</span>
-            <div>
-              <strong>{carregando ? "—" : ordens.length}</strong>
-              <span>Total de ordens</span>
-            </div>
-          </div>
-
-          <div className="cliente-indicador">
-            <span className="cliente-indicador-icone verde">⚙</span>
-            <div>
-              <strong>{carregando ? "—" : emAndamento}</strong>
-              <span>Em execução</span>
-            </div>
-          </div>
-
-          <div className="cliente-indicador">
-            <span className="cliente-indicador-icone amarelo">✓</span>
-            <div>
-              <strong>{carregando ? "—" : finalizadas}</strong>
-              <span>Finalizadas</span>
-            </div>
-          </div>
-        </section>
-
+        {!exibindoOrdens && (<>
+        <PainelClienteDetalhes
+          ordens={ordens}
+          veiculos={veiculos}
+          agendamentos={agendamentos}
+          carregando={carregando}
+        />
         <section
           className="rf14-pendencias"
           aria-label="Orçamentos pendentes de aprovação"
@@ -624,7 +582,18 @@ export default function DashboardCliente() {
           )}
         </section>
 
-        <section className="cliente-ordens-secao">
+        <AlertasPreventivos />
+        <section className="cliente-refresh-orders-cta" aria-label="Acesso às ordens de serviço">
+          <div>
+            <span className="cliente-refresh-kicker">ACOMPANHAMENTO</span>
+            <h3>Ordens de serviço e orçamentos</h3>
+            <p>Você possui {ordens.length} {ordens.length === 1 ? "ordem registrada" : "ordens registradas"}. Consulte os detalhes e aprove seus orçamentos.</p>
+          </div>
+          <button type="button" className="cliente-refresh-primary" onClick={() => navigate("/minhas-os")}>Ver minhas ordens <span aria-hidden="true">→</span></button>
+        </section>
+        </>)}
+        {exibindoOrdens && (
+        <section className="cliente-ordens-secao" id="ordens">
           <div className="cliente-ordens-header">
             <div>
               <h3>Minhas ordens de serviço</h3>
@@ -706,6 +675,15 @@ export default function DashboardCliente() {
 
                   <button
                     type="button"
+                    className="cliente-btn cliente-btn-secundario"
+                    onClick={() => navigate(`/cliente/inspecao-3d/${ordem.id}`)}
+                    style={{ marginBottom: 8 }}
+                  >
+                    ◈ Inspecionar veículo em 3D
+                  </button>
+
+                  <button
+                    type="button"
                     className="cliente-btn cliente-btn-primario"
                     onClick={() => visualizarOrcamento(ordem)}
                   >
@@ -718,9 +696,10 @@ export default function DashboardCliente() {
             </div>
           )}
         </section>
+        )}
       </div>
 
-      {ordemSelecionada && (
+      {exibindoOrdens && ordemSelecionada && (
         <ModalOrcamento
           ordem={ordemSelecionada}
           orcamento={orcamento}

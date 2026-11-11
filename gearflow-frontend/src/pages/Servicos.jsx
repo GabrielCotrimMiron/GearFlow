@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import api from "../services/api";
@@ -213,7 +212,9 @@ export default function CatalogoServicos() {
 
         <span className="catalogo-total">
           {servicos.length}{" "}
-          {servicos.length === 1 ? "serviço cadastrado" : "serviços cadastrados"}
+          {servicos.length === 1
+            ? "serviço cadastrado"
+            : "serviços cadastrados"}
         </span>
       </header>
 
@@ -352,9 +353,7 @@ export default function CatalogoServicos() {
                   <span className="catalogo-modal-etiqueta">
                     INFORMAÇÕES DO SERVIÇO
                   </span>
-                  <h2 id="catalogo-detalhes-titulo">
-                    Detalhes do serviço
-                  </h2>
+                  <h2 id="catalogo-detalhes-titulo">Detalhes do serviço</h2>
                 </div>
 
                 <button
@@ -502,9 +501,7 @@ export default function CatalogoServicos() {
                   </div>
 
                   <div className="catalogo-form-group">
-                    <label htmlFor="servico-tempo">
-                      Tempo estimado (min)
-                    </label>
+                    <label htmlFor="servico-tempo">Tempo estimado (min)</label>
                     <input
                       id="servico-tempo"
                       name="tempoEstim"

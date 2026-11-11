@@ -1,0 +1,37 @@
+/* GearFlow — atualização visual da área do cliente. Estilos isolados. */
+.cliente-refresh-overview,.cliente-refresh-hero{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(200px,.75fr);gap:24px;align-items:stretch;padding:32px;border-radius:22px;background:linear-gradient(119deg,#173944 0%,#1d5259 68%,#24736e 100%);color:#fff;position:relative;overflow:hidden;box-shadow:0 18px 36px rgba(23,57,68,.16)}
+.cliente-refresh-overview:before,.cliente-refresh-hero:before{content:"";position:absolute;width:260px;height:260px;border:1px solid rgba(255,255,255,.11);border-radius:50%;right:-60px;top:-110px;pointer-events:none}
+.cliente-refresh-kicker{display:block;color:#9be1d1;font-size:10px;font-weight:800;letter-spacing:1.8px;margin-bottom:13px}
+.cliente-refresh-intro{position:relative;z-index:1}.cliente-refresh-intro h3,.cliente-refresh-hero h2{font-size:clamp(22px,2.5vw,30px);line-height:1.2;letter-spacing:-.7px;max-width:530px;color:white}.cliente-refresh-intro p,.cliente-refresh-hero p{max-width:510px;color:#d0e5e5;margin:12px 0 22px;line-height:1.7;font-size:13px}
+.cliente-refresh-actions{display:flex;gap:10px;flex-wrap:wrap}.cliente-refresh-primary,.cliente-refresh-secondary{border-radius:10px;padding:12px 16px;border:1px solid transparent;font-weight:750;font-size:12px;cursor:pointer;transition:transform .2s,background .2s}.cliente-refresh-primary{background:#9be1d1;color:#173944;display:flex;gap:28px;align-items:center}.cliente-refresh-primary:hover{background:#c2f4e8;transform:translateY(-2px)}.cliente-refresh-secondary{color:#fff;border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.08)}.cliente-refresh-secondary:hover{background:rgba(255,255,255,.18)}
+.cliente-refresh-side{position:relative;z-index:1;align-self:stretch;display:flex;flex-direction:column;justify-content:center;padding:22px;border:1px solid rgba(255,255,255,.17);background:rgba(255,255,255,.09);border-radius:16px}.cliente-refresh-side-icon{font-size:27px;align-self:flex-end;color:#ade8dc}.cliente-refresh-side>span{font-size:10px;letter-spacing:1.2px;color:#d0e5e5;font-weight:700}.cliente-refresh-side strong{font-size:56px;line-height:1.1;letter-spacing:-2px;color:#fff;margin:8px 0}.cliente-refresh-side small{font-size:12px;color:#d0e5e5}
+.cliente-refresh-stats,.cliente-refresh-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0 25px}.cliente-refresh-stats article,.cliente-refresh-metrics article{background:#fff;border:1px solid #e2ebea;border-radius:17px;padding:18px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 18px rgba(28,63,67,.035)}.cliente-refresh-stat-icon{width:42px;height:42px;background:#e9f6f3;border-radius:12px;display:grid;place-items:center;font-size:21px;color:#24736e}.cliente-refresh-stats small,.cliente-refresh-metrics span{display:block;font-size:11px;color:#72858c}.cliente-refresh-stats strong,.cliente-refresh-metrics strong{display:block;color:#183b48;font-size:24px;line-height:1.4;letter-spacing:-.6px}
+.cliente-indicadores{display:none!important}.cliente-refresh{display:grid;gap:20px}.cliente-refresh-hero-symbol{font-size:80px;opacity:.7;text-align:center;align-self:center}.cliente-refresh-metrics{grid-template-columns:repeat(3,minmax(0,1fr));margin:0}.cliente-refresh-metrics article{display:block}.cliente-refresh-metrics strong{font-size:18px;margin-top:7px}.cliente-refresh-panel{border:1px solid #e2ebea;background:#fff;border-radius:16px;padding:24px}.cliente-refresh-panel h3{color:#183b48;margin-bottom:10px}.cliente-refresh-panel p{color:#688087;font-size:13px;line-height:1.6}
+/* Melhorias de estrutura das demais telas do cliente */
+.gf-layout:has(.cliente-pagina) .gf-content-card,.gf-layout:has(.veiculos-pagina) .gf-content-card,.gf-layout:has(.cliente-refresh) .gf-content-card{background:transparent;border:0;box-shadow:none;padding:0}
+.cliente-pagina,.veiculos-pagina{max-width:1380px;margin:0 auto}.cliente-ordens-grid,.veiculos-grid{gap:18px!important}.cliente-ordem-card,.veiculo-card{border-radius:17px!important;box-shadow:0 8px 25px rgba(25,60,65,.035)!important;transition:transform .2s,box-shadow .2s}.cliente-ordem-card:hover,.veiculo-card:hover{transform:translateY(-3px);box-shadow:0 16px 36px rgba(25,60,65,.10)!important}
+.veiculos-topo,.veiculos-form-card,.cliente-ordens-secao{border-radius:19px!important}.veiculos-btn,.cliente-btn{transition:background .2s,transform .2s,box-shadow .2s}.veiculos-btn:focus-visible,.cliente-btn:focus-visible,.cliente-refresh-primary:focus-visible,.cliente-refresh-secondary:focus-visible{outline:3px solid #55c7bc;outline-offset:2px}
+@media(max-width:900px){.cliente-refresh-overview,.cliente-refresh-hero{grid-template-columns:1fr}.cliente-refresh-side{display:none}.cliente-refresh-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.cliente-refresh-overview,.cliente-refresh-hero{padding:22px;border-radius:16px}.cliente-refresh-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.cliente-refresh-stats article{padding:13px;gap:9px}.cliente-refresh-stat-icon{width:32px;height:32px;font-size:16px}.cliente-refresh-stats strong{font-size:19px}.cliente-refresh-metrics{grid-template-columns:1fr}.cliente-refresh-actions>button{flex:1;justify-content:center}}
+
+/* Cards, formulários e feedback das áreas cliente */
+.gf-layout:has(.veiculos-pagina) .gf-content,.gf-layout:has(.cliente-pagina) .gf-content{padding-bottom:50px}
+.veiculos-pagina input:focus-visible,.veiculos-pagina select:focus-visible,.veiculos-pagina textarea:focus-visible{outline:0;border-color:#399f9a!important;box-shadow:0 0 0 3px rgba(57,159,154,.13)}
+.veiculos-pagina .veiculos-topo{background:linear-gradient(120deg,#fff,#f0faf8);border-color:#d7e8e5}
+.veiculos-pagina .veiculos-topo h2{font-size:clamp(20px,2vw,28px);letter-spacing:-.8px}
+.veiculos-pagina .veiculos-topo p{font-size:13px;max-width:620px;line-height:1.8}
+.veiculos-pagina .veiculos-btn-primario{background:#247f7a;box-shadow:0 4px 12px rgba(36,127,122,.1)}
+.veiculos-pagina .veiculos-btn-primario:hover{background:#176c68;transform:translateY(-1px)}
+.veiculos-vazio{border-radius:18px!important;background:linear-gradient(140deg,#fff,#f5faf9)!important;border:1px dashed #c5dfda!important}
+.cliente-filtros{display:flex;flex-wrap:wrap;gap:8px}
+.cliente-filtro{border-radius:999px!important}
+.cliente-btn-primario{background:#287f7d!important;border-color:#287f7d!important}
+.cliente-btn-primario:hover{background:#196c69!important;transform:translateY(-1px)}
+@media(max-width:620px){.veiculos-topo{padding:20px!important;flex-direction:column}.veiculos-acoes-topo{width:100%;flex-wrap:wrap}.veiculos-acoes-topo button{flex:1}}
+
+/* Resumo da visão geral com acesso dedicado às ordens */
+.cliente-refresh-orders-cta { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; padding: 25px 28px; background: var(--gf-surface, #fff); border: 1px solid #e5eaf0; border-radius: 20px; margin: 22px 0; }
+.cliente-refresh-orders-cta h3 { margin: 8px 0; font-size: 1.2rem; }
+.cliente-refresh-orders-cta p { margin: 0; color: #64748b; line-height: 1.55; }
+.cliente-refresh-orders-cta .cliente-refresh-primary { cursor: pointer; white-space: nowrap; }
+@media (max-width: 620px) { .cliente-refresh-orders-cta { padding: 20px; } .cliente-refresh-orders-cta .cliente-refresh-primary { width: 100%; justify-content: center; } }

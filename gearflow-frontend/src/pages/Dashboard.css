@@ -607,3 +607,20 @@
     font-size: 26px
   }
 }
+/* Acesso à gestão de clientes, com a identidade do painel gerencial */
+.dashboard-atalho-clientes {
+  border-color: #cce8e2;
+  background: linear-gradient(145deg, #f0faf8, #ffffff 75%);
+}
+.dashboard-atalho-clientes .dashboard-atalho-icone {
+  background: #d8f2eb;
+  color: #197e76;
+}
+.dashboard-atalho .dashboard-atalho-contagem {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 3px;
+  color: #247c76;
+  font-weight: 700;
+  font-size: 11px;
+}

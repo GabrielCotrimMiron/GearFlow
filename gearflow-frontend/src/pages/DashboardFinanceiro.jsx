@@ -1,8 +1,9 @@
+import { cabecalhosCsrf } from "../services/csrf";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { gerarAutorizacaoBasica } from "../services/clienteAuth";
+
 import "./DashboardFinanceiro.css";
 
-const API = "http://localhost:8080";
+const API = "/api";
 
 const dinheiro = (valor) =>
   new Intl.NumberFormat("pt-BR", {
@@ -193,14 +194,9 @@ export default function DashboardFinanceiro() {
     setErro("");
 
     try {
-      const authorization = gerarAutorizacaoBasica();
 
-      if (!authorization) {
-        throw new Error("Sessão não encontrada. Entre novamente no sistema.");
-      }
-
-      const opcoes = {
-        headers: { Authorization: authorization },
+      const opcoes = { credentials: "same-origin",
+        headers: {},
         cache: "no-store",
       };
 
@@ -385,18 +381,14 @@ export default function DashboardFinanceiro() {
     setMensagem("");
 
     try {
-      const authorization = gerarAutorizacaoBasica();
-
-      if (!authorization) {
-        throw new Error("Sessão expirada. Faça login novamente.");
-      }
 
       const resposta = await fetch(
         `${API}/financeiro/ordens/${os.id}/${acao}`,
         {
           method: "PUT",
+          credentials: "same-origin",
           headers: {
-            Authorization: authorization,
+            ...cabecalhosCsrf(),
           },
         },
       );
@@ -436,16 +428,11 @@ export default function DashboardFinanceiro() {
     setMensagem("");
 
     try {
-      const authorization = gerarAutorizacaoBasica();
 
-      if (!authorization) {
-        throw new Error("Sessão expirada. Faça login novamente.");
-      }
-
-      const resposta = await fetch(`${API}/financeiro/despesas`, {
+      const resposta = await fetch(`${API}/financeiro/despesas`, { credentials: "same-origin",
         method: "POST",
         headers: {
-          Authorization: authorization,
+          ...cabecalhosCsrf(),
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

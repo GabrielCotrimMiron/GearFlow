@@ -19,10 +19,12 @@
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-html, body {
+html,
+body {
   background-color: var(--gf-background);
   color: var(--gf-text-dark);
-  overflow-x: hidden; /* Mata o scroll lateral */
+  overflow-x: hidden;
+  /* Mata o scroll lateral */
 }
 
 /* ==== EFEITOS DA SIDEBAR ==== */
@@ -40,7 +42,8 @@ html, body {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #A0B2BA; /* Texto inativo mais suave */
+  color: #A0B2BA;
+  /* Texto inativo mais suave */
   text-decoration: none;
   padding: 14px 18px;
   border-radius: 12px;
@@ -54,7 +57,8 @@ html, body {
 .menu-link:hover {
   background-color: rgba(69, 162, 158, 0.15);
   color: var(--gf-accent);
-  transform: translateX(6px); /* Pequeno salto para a direita */
+  transform: translateX(6px);
+  /* Pequeno salto para a direita */
 }
 
 /* Efeito do menu ativo (NavLink do React faz isso automaticamente) */
@@ -89,14 +93,16 @@ html, body {
   border-radius: 20px;
   padding: 32px;
   box-shadow: 0 8px 32px rgba(42, 68, 84, 0.04);
-  border: 1px solid rgba(0,0,0,0.02);
+  border: 1px solid rgba(0, 0, 0, 0.02);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .glass-card:hover {
-  transform: translateY(-4px); /* Levanta o cartão suavemente */
+  transform: translateY(-4px);
+  /* Levanta o cartão suavemente */
   box-shadow: 0 12px 40px rgba(42, 68, 84, 0.08);
 }
+
 /* ==== PÁGINA DE EQUIPE ==== */
 .equipe-header-actions {
   display: flex;
@@ -138,7 +144,7 @@ html, body {
   background: var(--gf-surface);
   border-radius: 12px;
   padding: 24px;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 4px 12px rgba(42, 68, 84, 0.05);
   display: flex;
   flex-direction: column;
@@ -206,6 +212,7 @@ html, body {
   background: var(--gf-accent);
   color: white;
 }
+
 /* ==== PÁGINA DE LOGIN ==== */
 .login-page {
   display: flex;
@@ -294,7 +301,8 @@ html, body {
 .btn-login {
   width: 100%;
   padding: 14px;
-  background-color: #1A202C; /* Tom escuro baseado na referência */
+  background-color: #1A202C;
+  /* Tom escuro baseado na referência */
   color: white;
   border: none;
   border-radius: 6px;
@@ -308,6 +316,7 @@ html, body {
 .btn-login:hover {
   background-color: var(--gf-primary-dark);
 }
+
 /* ==== MODAL DE CADASTRO ==== */
 .modal-overlay {
   position: fixed;
@@ -315,11 +324,15 @@ html, body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5); /* Cor escura com transparência */
+  background-color: rgba(0, 0, 0, 0.5);
+  /* Cor escura com transparência */
   display: flex;
-  justify-content: center; /* Centraliza horizontalmente */
-  align-items: center; /* Centraliza verticalmente */
-  z-index: 9999; /* Garante que fica por cima de tudo */
+  justify-content: center;
+  /* Centraliza horizontalmente */
+  align-items: center;
+  /* Centraliza verticalmente */
+  z-index: 9999;
+  /* Garante que fica por cima de tudo */
 }
 
 .modal-content {
@@ -327,12 +340,17 @@ html, body {
   padding: 30px;
   border-radius: 12px;
   width: 100%;
-  max-width: 500px; /* Largura máxima para não esticar muito */
-  max-height: 90vh; /* Altura máxima de 90% da tela */
-  overflow-y: auto; /* Adiciona barra de rolagem apenas dentro do modal se necessário */
+  max-width: 500px;
+  /* Largura máxima para não esticar muito */
+  max-height: 90vh;
+  /* Altura máxima de 90% da tela */
+  overflow-y: auto;
+  /* Adiciona barra de rolagem apenas dentro do modal se necessário */
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  position: relative; /* Importante para o botão de fechar (x) se posicionar corretamente */
+  position: relative;
+  /* Importante para o botão de fechar (x) se posicionar corretamente */
 }
+
 .modal-header {
   display: flex;
   justify-content: space-between;

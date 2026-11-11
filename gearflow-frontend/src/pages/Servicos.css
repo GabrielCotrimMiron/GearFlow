@@ -1,4 +1,3 @@
-
 /* ======================================
    GEARFLOW — CATÁLOGO DE SERVIÇOS
    ====================================== */
@@ -80,7 +79,7 @@
   box-shadow: 0 0 0 3px rgba(56, 178, 172, 0.12);
 }
 
-.catalogo-busca > span {
+.catalogo-busca>span {
   color: #879aa5;
   font-size: 25px;
 }
@@ -236,7 +235,7 @@
   border-bottom: 1px solid #edf1f2;
 }
 
-.catalogo-dados > div {
+.catalogo-dados>div {
   display: flex;
   flex-direction: column;
   gap: 7px;
@@ -281,7 +280,7 @@
   padding: 28px;
 }
 
-.catalogo-vazio > span {
+.catalogo-vazio>span {
   font-size: 36px;
   color: #8aafb0;
 }
@@ -421,7 +420,7 @@
   gap: 14px;
 }
 
-.catalogo-detalhes > div {
+.catalogo-detalhes>div {
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -444,6 +443,7 @@
 /* RESPONSIVIDADE */
 
 @media (max-width: 700px) {
+
   .catalogo-header,
   .catalogo-toolbar {
     flex-direction: column;

@@ -13,7 +13,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/agendamentos")
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"},methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PATCH, RequestMethod.OPTIONS})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" }, methods = { RequestMethod.GET,
+        RequestMethod.POST, RequestMethod.PATCH, RequestMethod.OPTIONS })
 public class AgendamentoController {
 
     private final AgendamentoService agendamentoService;

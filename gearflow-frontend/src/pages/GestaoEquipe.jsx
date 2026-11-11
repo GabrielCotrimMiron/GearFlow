@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import api from "../services/api";
@@ -31,8 +30,7 @@ function obterIniciais(nome) {
   }
 
   return (
-    partes[0].charAt(0) +
-    partes[partes.length - 1].charAt(0)
+    partes[0].charAt(0) + partes[partes.length - 1].charAt(0)
   ).toUpperCase();
 }
 
@@ -154,10 +152,7 @@ export default function Equipe() {
 
     try {
       if (funcionarioEmEdicao) {
-        await api.put(
-          `/funcionarios/${funcionarioEmEdicao.id}`,
-          payload,
-        );
+        await api.put(`/funcionarios/${funcionarioEmEdicao.id}`, payload);
       } else {
         await api.post("/funcionarios", payload);
       }
@@ -174,9 +169,7 @@ export default function Equipe() {
       );
     } catch (error) {
       console.error(error);
-      setErro(
-        "Não foi possível salvar o funcionário. Verifique os dados.",
-      );
+      setErro("Não foi possível salvar o funcionário. Verifique os dados.");
     } finally {
       setSalvando(false);
     }
@@ -186,16 +179,12 @@ export default function Equipe() {
 
   const equipeFiltrada = equipe.filter((funcionario) => {
     const nome = String(funcionario.nome || "").toLowerCase();
-    const matricula = String(
-      funcionario.matricula || "",
-    ).toLowerCase();
+    const matricula = String(funcionario.matricula || "").toLowerCase();
 
-    const correspondeBusca =
-      nome.includes(busca) || matricula.includes(busca);
+    const correspondeBusca = nome.includes(busca) || matricula.includes(busca);
 
     const correspondeCargo =
-      filtroCargo === "TODOS" ||
-      funcionario.nivelAcesso === filtroCargo;
+      filtroCargo === "TODOS" || funcionario.nivelAcesso === filtroCargo;
 
     return correspondeBusca && correspondeCargo;
   });
@@ -216,9 +205,7 @@ export default function Equipe() {
             <span className="equipe-pagina-heading-icon">♙</span>
             <h2>Gestão de Equipe</h2>
           </div>
-          <p>
-            Organize os colaboradores, cargos e informações da oficina.
-          </p>
+          <p>Organize os colaboradores, cargos e informações da oficina.</p>
         </div>
 
         <span className="equipe-pagina-etiqueta">
@@ -254,9 +241,7 @@ export default function Equipe() {
         </div>
 
         <div className="equipe-pagina-indicador">
-          <span className="equipe-pagina-indicador-icone mecanicos">
-            ⚙
-          </span>
+          <span className="equipe-pagina-indicador-icone mecanicos">⚙</span>
           <div>
             <strong>{totalMecanicos}</strong>
             <span>Mecânicos</span>
@@ -264,9 +249,7 @@ export default function Equipe() {
         </div>
 
         <div className="equipe-pagina-indicador">
-          <span className="equipe-pagina-indicador-icone gerentes">
-            ◈
-          </span>
+          <span className="equipe-pagina-indicador-icone gerentes">◈</span>
           <div>
             <strong>{totalGerentes}</strong>
             <span>Gerentes</span>
@@ -347,15 +330,11 @@ export default function Equipe() {
               <div className="equipe-pagina-informacoes">
                 <div>
                   <span>E-mail</span>
-                  <strong>
-                    {funcionario.email || "Não informado"}
-                  </strong>
+                  <strong>{funcionario.email || "Não informado"}</strong>
                 </div>
                 <div>
                   <span>Matrícula</span>
-                  <strong>
-                    {funcionario.matricula || "Não informada"}
-                  </strong>
+                  <strong>{funcionario.matricula || "Não informada"}</strong>
                 </div>
               </div>
 
@@ -410,9 +389,7 @@ export default function Equipe() {
                   <span className="equipe-pagina-modal-etiqueta">
                     INFORMAÇÕES DO COLABORADOR
                   </span>
-                  <h2 id="equipe-detalhes-titulo">
-                    Ficha do funcionário
-                  </h2>
+                  <h2 id="equipe-detalhes-titulo">Ficha do funcionário</h2>
                 </div>
 
                 <button
@@ -440,9 +417,7 @@ export default function Equipe() {
                 </div>
                 <div>
                   <span>CPF</span>
-                  <strong>
-                    {funcionarioDetalhe.cpf || "Não informado"}
-                  </strong>
+                  <strong>{funcionarioDetalhe.cpf || "Não informado"}</strong>
                 </div>
                 <div>
                   <span>Matrícula</span>
@@ -583,8 +558,7 @@ export default function Equipe() {
                 <div className="equipe-pagina-form-group">
                   <label htmlFor="func-senha">
                     Senha{" "}
-                    {funcionarioEmEdicao &&
-                      "(deixe em branco para manter)"}
+                    {funcionarioEmEdicao && "(deixe em branco para manter)"}
                   </label>
                   <input
                     id="func-senha"

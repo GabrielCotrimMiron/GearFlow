@@ -2,6 +2,8 @@
 package com.gearflow.gearflow_system.Configs;
 
 import com.gearflow.gearflow_system.Models.Cliente;
+import com.gearflow.gearflow_system.Models.Funcionario;
+import com.gearflow.gearflow_system.Models.NivelAcesso;
 import com.gearflow.gearflow_system.Repositories.UsuarioRepository;
 
 import java.util.List;
@@ -21,21 +23,39 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+
 @Configuration
 public class SecurityConfig {
+        @Bean
+        public SecurityContextRepository securityContextRepository() {
+                return new HttpSessionSecurityContextRepository();
+        }
 
         @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity http)
-                        throws Exception {
+        public SecurityFilterChain securityFilterChain(
+                        HttpSecurity http,
+                        SecurityContextRepository securityContextRepository) throws Exception {
 
                 return http
+                                .securityContext(context -> context
+                                                .securityContextRepository(securityContextRepository))
                                 .cors(Customizer.withDefaults())
                                 .csrf(csrf -> csrf.disable())
                                 .authorizeHttpRequests(auth -> auth
 
+                                                // Mantenha aqui todas as regras existentes
+
                                                 // Permitir preflight CORS
                                                 .requestMatchers(HttpMethod.OPTIONS, "/**")
                                                 .permitAll()
+
+                                                // Apenas gerentes podem gerenciar cadastros de clientes
+                                                .requestMatchers("/admin/clientes/**")
+                                                .hasRole("GERENTE")
+                                                .requestMatchers(HttpMethod.PUT, "/clientes/*")
+                                                .hasRole("GERENTE")
 
                                                 // Listagem geral das ordens de servico
                                                 // Acesso restrito aos funcionarios
@@ -110,7 +130,7 @@ public class SecurityConfig {
                                 "Authorization",
                                 "Content-Type",
                                 "Accept"));
-
+                config.setAllowCredentials(true);
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
                 source.registerCorsConfiguration("/**", config);
@@ -127,13 +147,16 @@ public class SecurityConfig {
                                         .orElseThrow(() -> new UsernameNotFoundException(
                                                         "Usuario nao encontrado"));
 
-                        String perfil = usuario instanceof Cliente
-                                        ? "USER"
-                                        : "FUNCIONARIO";
+                        String[] perfis = usuario instanceof Cliente
+                                        ? new String[] { "USER" }
+                                        : usuario instanceof Funcionario funcionario
+                                                        && funcionario.getNivelAcesso() == NivelAcesso.GERENTE
+                                                                        ? new String[] { "FUNCIONARIO", "GERENTE" }
+                                                                        : new String[] { "FUNCIONARIO" };
 
                         return User.withUsername(usuario.getEmail())
                                         .password(usuario.getSenha())
-                                        .roles(perfil)
+                                        .roles(perfis)
                                         .build();
                 };
         }
