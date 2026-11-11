@@ -1,0 +1,912 @@
+/* GearFlow / Inspeção 3D — módulo independente para evitar conflitos com as demais RFs */
+.insp3d-page {
+  --i-text: #193b46;
+  --i-muted: #78909a;
+  --i-primary: #148a83;
+  --i-dark: #0e6268;
+  --i-border: #dfebed;
+  --i-shadow: 0 10px 36px rgba(27, 62, 73, .055);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  color: var(--i-text);
+  font-family: inherit;
+}
+
+.insp3d-page *,
+.insp3d-page *::before,
+.insp3d-page *::after {
+  box-sizing: border-box;
+}
+
+.insp3d-page button,
+.insp3d-page select,
+.insp3d-page input,
+.insp3d-page textarea {
+  font: inherit;
+}
+
+.insp3d-page button:focus-visible,
+.insp3d-page select:focus-visible,
+.insp3d-page input:focus-visible,
+.insp3d-page textarea:focus-visible {
+  outline: 3px solid rgba(20, 138, 131, .35);
+  outline-offset: 2px;
+}
+
+.insp3d-kicker {
+  color: var(--i-primary);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.insp3d-intro {
+  background: linear-gradient(110deg, #123642 0%, #176a71 58%, #20a397 100%);
+  color: #fff;
+  border-radius: 20px;
+  padding: 30px 34px;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.insp3d-intro .insp3d-kicker {
+  color: #b6f4ed;
+}
+
+.insp3d-intro h2 {
+  margin: 10px 0;
+  color: #fff;
+  font-size: clamp(22px, 2.8vw, 29px);
+  letter-spacing: -.7px;
+  line-height: 1.25;
+}
+
+.insp3d-intro p {
+  color: #d8e9eb;
+  margin: 0;
+  font-size: 13px;
+  max-width: 660px;
+  line-height: 1.7;
+}
+
+.insp3d-mode-label {
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, .32);
+  border-radius: 30px;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, .1);
+  color: #e6ffff;
+  font-size: 10px;
+  letter-spacing: .8px;
+  font-weight: 800;
+}
+
+.insp3d-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 18px;
+  border: 1px solid var(--i-border);
+  border-radius: 15px;
+  background: #fff;
+}
+
+.insp3d-picker label {
+  font-size: 12px;
+  font-weight: 800;
+  color: #607986;
+}
+
+.insp3d-picker select {
+  flex: 1;
+  min-width: min(250px, 100%);
+  max-width: 650px;
+  padding: 11px 13px;
+  border: 1px solid #d4e3e6;
+  border-radius: 10px;
+  background: #f7fafb;
+  font-size: 13px;
+  color: var(--i-text);
+}
+
+.insp3d-button {
+  border: 1px solid #c6dedf;
+  color: #126e6b;
+  background: #fff;
+  border-radius: 10px;
+  padding: 11px 16px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: .18s ease;
+}
+
+.insp3d-button:hover:not(:disabled) {
+  border-color: var(--i-primary);
+  color: #fff;
+  background: var(--i-primary);
+}
+
+.insp3d-button.primary {
+  background: var(--i-primary);
+  color: #fff;
+  border-color: var(--i-primary);
+}
+
+.insp3d-button.primary:hover:not(:disabled) {
+  background: #106e6c;
+}
+
+.insp3d-button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.insp3d-alert {
+  margin: 0;
+  border-radius: 11px;
+  padding: 13px 16px;
+  background: #f0f6f7;
+  color: #436370;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.insp3d-alert.demo {
+  background: #fffbef;
+  color: #7d631a;
+  border: 1px solid #f3e4b8;
+}
+
+.insp3d-alert.error {
+  background: #fff2f2;
+  color: #ad353f;
+  border: 1px solid #ffd5d8;
+}
+
+.insp3d-alert.success {
+  background: #edfbf3;
+  color: #227b50;
+  border: 1px solid #bfe5d3;
+}
+
+.insp3d-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 18px 23px;
+  border: 1px solid var(--i-border);
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: var(--i-shadow);
+}
+
+.insp3d-car-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.insp3d-car-icon {
+  display: grid;
+  place-items: center;
+  font-size: 29px;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  color: #179387;
+  border-radius: 14px;
+  background: #e5f7f3;
+}
+
+.insp3d-car-summary div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.insp3d-label {
+  color: var(--i-muted);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 1px;
+}
+
+.insp3d-car-summary strong {
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+
+.insp3d-car-summary small {
+  font-size: 12px;
+  color: var(--i-muted);
+}
+
+.insp3d-numbers {
+  display: flex;
+  align-items: stretch;
+}
+
+.insp3d-numbers>div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 92px;
+  padding: 2px 16px;
+  border-left: 1px solid var(--i-border);
+  gap: 4px;
+}
+
+.insp3d-numbers strong {
+  color: #1b8d85;
+  font-size: 23px;
+  line-height: 1.2;
+}
+
+.insp3d-numbers span {
+  font-size: 10px;
+  color: var(--i-muted);
+  font-weight: 700;
+}
+
+.insp3d-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(270px, .85fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.insp3d-visual-panel,
+.insp3d-side-card,
+.insp3d-diagnostics,
+.insp3d-create {
+  min-width: 0;
+  border: 1px solid var(--i-border);
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: var(--i-shadow);
+  overflow: hidden;
+}
+
+.insp3d-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 22px 17px;
+}
+
+.insp3d-panel-header h3 {
+  margin: 6px 0 0;
+  font-size: 18px;
+  color: var(--i-text);
+}
+
+.insp3d-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border-radius: 24px;
+  background: #eaf8f2;
+  color: #277854;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.insp3d-live i {
+  width: 7px;
+  height: 7px;
+  background: #27b27a;
+  border-radius: 50%;
+}
+
+.insp3d-stage {
+  position: relative;
+  height: clamp(380px, 48vw, 580px);
+  margin: 0 16px;
+  border: 1px solid #d5e8eb;
+  background: #e8f4f5;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.insp3d-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.insp3d-canvas canvas {
+  display: block;
+  touch-action: none;
+}
+
+.insp3d-watermark {
+  pointer-events: none;
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  border: 1px solid rgba(29, 83, 92, .15);
+  color: #4d737d;
+  background: rgba(255, 255, 255, .72);
+  padding: 7px 9px;
+  border-radius: 7px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  max-width: calc(100% - 24px);
+}
+
+.insp3d-marker-label {
+  cursor: pointer;
+  display: block;
+  white-space: nowrap;
+  border: 1px solid #d5eff2;
+  color: #285463;
+  background: rgba(255, 255, 255, .94);
+  padding: 5px 9px;
+  border-radius: 25px;
+  font-size: 10px;
+  font-weight: 850;
+  box-shadow: 0 6px 18px rgba(20, 66, 72, .2);
+}
+
+.insp3d-marker-label.selected {
+  background: #0f666b;
+  color: #fff;
+  border-color: #0f666b;
+}
+
+.insp3d-view-legend {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 11px;
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  pointer-events: none;
+}
+
+.insp3d-view-legend span {
+  background: rgba(255, 255, 255, .90);
+  color: #4b7381;
+  border-radius: 20px;
+  padding: 6px 9px;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.insp3d-loading,
+.insp3d-fallback {
+  height: 100%;
+  width: 100%;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  gap: 8px;
+  padding: 25px;
+  color: #38616a;
+}
+
+.insp3d-fallback p {
+  max-width: 370px;
+  margin: 0 auto;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.insp3d-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 17px 16px 0;
+}
+
+.insp3d-controls button {
+  border: 1px solid #d8e6e8;
+  border-radius: 9px;
+  background: #f8fbfb;
+  color: #38616c;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
+}
+
+.insp3d-controls button:hover,
+.insp3d-controls button.active {
+  color: #fff;
+  background: #137d7c;
+  border-color: #137d7c;
+}
+
+.insp3d-caveat {
+  color: #889ca5;
+  font-size: 10px;
+  line-height: 1.7;
+  margin: 15px 18px 19px;
+}
+
+.insp3d-side {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.insp3d-side-card {
+  padding: 22px;
+}
+
+.insp3d-side-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.insp3d-side-title h3,
+.insp3d-focus-card h3 {
+  margin: 7px 0 0;
+  font-size: 16px;
+}
+
+.insp3d-side-title>span {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  background: #e4f6f3;
+  border-radius: 9px;
+  color: #158780;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.insp3d-region-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 19px;
+}
+
+.insp3d-region {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 11px;
+  padding: 11px 12px;
+  background: #fff;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #4b6570;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: .18s ease;
+}
+
+.insp3d-region:hover {
+  background: #f0f8f7;
+}
+
+.insp3d-region.selected {
+  background: #e9f7f4;
+  border-color: #c1e8e1;
+  color: #117a75;
+}
+
+.insp3d-region-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #9fc7c7;
+  flex: 0 0 auto;
+}
+
+.insp3d-region.selected .insp3d-region-dot {
+  background: #18a394;
+}
+
+.insp3d-region>span:nth-child(2) {
+  flex: 1;
+}
+
+.insp3d-count {
+  font-size: 10px;
+  color: #be464d;
+  background: #fff0f0;
+  min-width: 22px;
+  text-align: center;
+  border-radius: 15px;
+  padding: 4px;
+}
+
+.insp3d-region-chevron {
+  color: #8ea5ab;
+  font-size: 17px;
+}
+
+.insp3d-focus-card {
+  background: #f5faf9;
+}
+
+.insp3d-focus-card p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #68838b;
+}
+
+.insp3d-focus-foot {
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: #e5f5f1;
+  font-size: 11px;
+  font-weight: 800;
+  color: #15867d;
+}
+
+.insp3d-diagnostics,
+.insp3d-create {
+  padding: 26px;
+}
+
+.insp3d-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.insp3d-section-head h3 {
+  margin: 6px 0;
+  font-size: 19px;
+}
+
+.insp3d-section-head p {
+  font-size: 12px;
+  color: var(--i-muted);
+  margin: 0;
+  line-height: 1.7;
+}
+
+.insp3d-counter {
+  padding: 8px 12px;
+  border-radius: 25px;
+  background: #eaf6f4;
+  color: #16867e;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.insp3d-general {
+  padding: 14px 17px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  background: #f1f7f8;
+  border-left: 3px solid #62aca9;
+}
+
+.insp3d-general strong {
+  color: #284f60;
+  font-size: 12px;
+}
+
+.insp3d-general p {
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 7px 0 0;
+  white-space: pre-line;
+  color: #58727b;
+}
+
+.insp3d-empty {
+  padding: 26px 16px;
+  color: #78919a;
+  border: 1px dashed #cddfe1;
+  border-radius: 12px;
+  background: #fbfdfd;
+  font-size: 12px;
+  text-align: center;
+}
+
+.insp3d-empty p {
+  margin: 8px 0 0;
+  line-height: 1.7;
+}
+
+.insp3d-diagnostic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.insp3d-diagnostic {
+  min-width: 0;
+  border-radius: 13px;
+  padding: 18px;
+  border: 1px solid #e4ebef;
+  border-left: 4px solid #4eb99d;
+  background: #fcfefe;
+}
+
+.insp3d-diagnostic.sev-media {
+  border-left-color: #e7ab46;
+}
+
+.insp3d-diagnostic.sev-alta {
+  border-left-color: #e57a59;
+}
+
+.insp3d-diagnostic.sev-critica {
+  border-left-color: #dc495c;
+}
+
+.insp3d-diagnostic.resolved {
+  background: #f5f9f7;
+  border-left-color: #62ae8a;
+}
+
+.insp3d-diagnostic-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.insp3d-diagnostic-region {
+  color: #758f9b;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: .7px;
+}
+
+.insp3d-severity {
+  font-size: 10px;
+  font-weight: 850;
+  padding: 5px 9px;
+  border-radius: 30px;
+  background: #e9f7ef;
+  color: #23774e;
+}
+
+.insp3d-severity.media {
+  background: #fff2d7;
+  color: #946300;
+}
+
+.insp3d-severity.alta,
+.insp3d-severity.critica {
+  background: #ffebec;
+  color: #b53844;
+}
+
+.insp3d-severity.ok {
+  background: #e5f7ee;
+  color: #278052;
+}
+
+.insp3d-diagnostic h4 {
+  font-size: 14px;
+  margin: 14px 0 7px;
+  line-height: 1.35;
+}
+
+.insp3d-diagnostic p {
+  color: #6b8390;
+  font-size: 12px;
+  line-height: 1.75;
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.insp3d-diagnostic-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-top: 15px;
+}
+
+.insp3d-diagnostic-actions button {
+  cursor: pointer;
+  border: 1px solid #cae1e1;
+  border-radius: 9px;
+  background: #fff;
+  color: #157f78;
+  padding: 9px 11px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.insp3d-diagnostic-actions button:hover:not(:disabled) {
+  color: #fff;
+  background: #168e87;
+  border-color: #168e87;
+}
+
+.insp3d-diagnostic-actions button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
+.insp3d-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+  align-items: end;
+}
+
+.insp3d-form label {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #41616b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.insp3d-form select,
+.insp3d-form input,
+.insp3d-form textarea {
+  border: 1px solid #d5e4e7;
+  border-radius: 10px;
+  padding: 12px 13px;
+  background: #fafdfd;
+  color: #2c505c;
+  font-size: 13px;
+  width: 100%;
+  min-width: 0;
+}
+
+.insp3d-form textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.insp3d-form select:focus,
+.insp3d-form input:focus,
+.insp3d-form textarea:focus {
+  border-color: #15a193;
+  background: #fff;
+}
+
+.insp3d-form select:disabled,
+.insp3d-form input:disabled,
+.insp3d-form textarea:disabled {
+  cursor: not-allowed;
+  background: #f2f4f5;
+}
+
+.insp3d-field-wide {
+  grid-column: 1 / -1;
+}
+
+.insp3d-form .primary {
+  justify-self: start;
+}
+
+.insp3d-form-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  color: #927629;
+}
+
+@media(max-width: 1060px) {
+  .insp3d-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .insp3d-side {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .insp3d-region-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media(max-width: 740px) {
+  .insp3d-intro {
+    padding: 22px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .insp3d-mode-label {
+    display: none;
+  }
+
+  .insp3d-stage {
+    height: 390px;
+    margin: 0 9px;
+  }
+
+  .insp3d-side {
+    grid-template-columns: 1fr;
+  }
+
+  .insp3d-diagnostic-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .insp3d-form {
+    grid-template-columns: 1fr;
+  }
+
+  .insp3d-form .primary {
+    width: 100%;
+  }
+
+  .insp3d-summary {
+    padding: 16px;
+  }
+
+  .insp3d-numbers {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .insp3d-numbers>div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .insp3d-numbers>div:first-child {
+    border: 0;
+  }
+
+  .insp3d-diagnostics,
+  .insp3d-create {
+    padding: 20px 16px;
+  }
+}
+
+@media(max-width: 440px) {
+  .insp3d-stage {
+    height: 325px;
+  }
+
+  .insp3d-view-legend span {
+    font-size: 9px;
+  }
+
+  .insp3d-region-list {
+    grid-template-columns: 1fr;
+  }
+
+  .insp3d-controls button {
+    flex: 1 1 40%;
+  }
+
+  .insp3d-picker select {
+    min-width: 100%;
+  }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .insp3d-page button {
+    transition: none;
+  }
+}

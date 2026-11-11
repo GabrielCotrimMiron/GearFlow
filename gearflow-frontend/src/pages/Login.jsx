@@ -1,181 +1,69 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
-
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, Wrench } from "lucide-react";
 import api from "../services/api";
-import { salvarCredenciais, limparCredenciais } from "../services/clienteAuth";
+import { consultarSessao } from "../services/session";
+import AuthVisual from "./AuthVisual";
+import "./AuthPages.css";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
-
   const navigate = useNavigate();
+  const location = useLocation();
+  const registroCriado = location.state?.registroCriado === true;
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-
+  async function handleLogin(evento) {
+    evento.preventDefault();
+    if (carregando) return;
     setErro("");
     setCarregando(true);
-
-    // Limpa as credenciais de um login anterior.
-    limparCredenciais();
-
     try {
-      const response = await api.post("/auth/login", {
-        email: email.trim(),
-        senha,
-      });
-
-      const { user } = response.data;
-
-      if (user === "CLIENTE") {
-        salvarCredenciais(email.trim(), senha);
-
-        navigate("/DashboardCliente", { replace: true });
+      const resposta = await api.post("/auth/login", { email: email.trim(), senha });
+      const sessao = await consultarSessao();
+      if (!sessao) throw new Error("Não foi possível confirmar a sessão.");
+      window.dispatchEvent(new Event("gearflow:sessao-alterada"));
+      const destinoPadrao = resposta.data?.user === "CLIENTE" ? "/DashboardCliente" : "/dashboard";
+      const solicitado = location.state?.from;
+      const destino = typeof solicitado === "string" && solicitado.startsWith("/") && !solicitado.startsWith("//") ? solicitado : destinoPadrao;
+      navigate(destino, { replace: true, state: null });
+    } catch (erroRecebido) {
+      if (erroRecebido.response?.status === 401 || erroRecebido.response?.status === 403) {
+        setErro("E-mail ou senha incorretos. Confira os dados e tente novamente.");
       } else {
-        // Funcionarios tambem precisam de autenticacao
-        // para consultar a fila de prioridades.
-        salvarCredenciais(email.trim(), senha);
-
-        navigate("/dashboard", { replace: true });
+        setErro("Não foi possível entrar agora. Verifique sua conexão e tente novamente.");
       }
-    } catch {
-      setErro("Credenciais inválidas. Verifique o e-mail e a senha.");
     } finally {
       setCarregando(false);
     }
-  };
+  }
 
   return (
-    <div className="login-page">
-      {/* Lado esquerdo - Banner */}
-      <div className="login-banner">
-        <div>
-          <span
-            style={{
-              fontSize: "3rem",
-              color: "var(--gf-accent)",
-            }}
-          >
-            ⚙️
-          </span>
-        </div>
-
-        <h1 className="login-banner-title">
-          Olá,
-          <br />
-          Gearflow! 👋
-        </h1>
-
-        <p className="login-banner-subtitle">
-          Deixe as tarefas manuais da sua oficina no passado. Aumente a
-          produtividade através da automação e poupe imenso tempo!
-        </p>
-      </div>
-
-      {/* Lado direito - Formulário */}
-      <div className="login-form-container">
-        <div className="login-form-box">
-          <div className="login-header-logo">Gearflow</div>
-
-          <h2 className="login-title">Bem-vindo de volta!</h2>
-
-          <p className="login-subtitle">
-            Entre com as suas credenciais para gerir o sistema.
-          </p>
-
-          <form onSubmit={handleLogin}>
-            {erro && (
-              <p
-                role="alert"
-                style={{
-                  color: "#E53E3E",
-                  marginBottom: "16px",
-                  fontSize: "0.9rem",
-                }}
-              >
-                {erro}
-              </p>
-            )}
-
-            <input
-              type="email"
-              className="login-input"
-              placeholder="seu.email@gearflow.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="username"
-              required
-            />
-
-            <input
-              type="password"
-              className="login-input"
-              placeholder="Senha"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              autoComplete="current-password"
-              required
-            />
-
-            <button type="submit" className="btn-login" disabled={carregando}>
-              {carregando ? "Entrando..." : "Entrar"}
-            </button>
+    <main className="gf-auth-page">
+      <AuthVisual />
+      <section className="gf-auth-form-side">
+        <div className="gf-auth-mobile-brand"><Wrench size={20}/> <span>gear<strong>flow</strong></span></div>
+        <div className="gf-auth-form-shell">
+          <div className="gf-auth-pill"><LockKeyhole size={14}/> ACESSO À PLATAFORMA</div>
+          <h2>Bom ter você <span>de volta.</span></h2>
+          <p className="gf-auth-lead">Entre na sua conta para continuar de onde parou.</p>
+          {registroCriado && <div className="gf-auth-alert gf-auth-alert-success" role="status"><ShieldCheck size={19}/> Conta criada! Entre com seu e-mail e senha.</div>}
+          {erro && <div className="gf-auth-alert gf-auth-alert-error" role="alert">{erro}</div>}
+          <form onSubmit={handleLogin} className="gf-auth-form">
+            <label htmlFor="gf-login-email">Endereço de e-mail</label>
+            <div className="gf-auth-input-wrap"><Mail size={19}/><input id="gf-login-email" type="email" placeholder="voce@exemplo.com" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={carregando}/></div>
+            <div className="gf-auth-label-row"><label htmlFor="gf-login-password">Sua senha</label></div>
+            <div className="gf-auth-input-wrap"><LockKeyhole size={19}/><input id="gf-login-password" type={mostrarSenha ? "text" : "password"} placeholder="Digite sua senha" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} required disabled={carregando}/><button className="gf-auth-reveal" type="button" onClick={() => setMostrarSenha((v) => !v)} aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"} aria-pressed={mostrarSenha}>{mostrarSenha ? <EyeOff size={19}/> : <Eye size={19}/>}</button></div>
+            <button className="gf-auth-submit" type="submit" disabled={carregando}>{carregando ? <><span className="gf-auth-spinner"/> Entrando...</> : <>Entrar na minha conta <ArrowRight size={19}/></>}</button>
           </form>
-
-          {/* Separador visual */}
-          <div
-            style={{
-              margin: "20px 0",
-              textAlign: "center",
-              color: "#666",
-            }}
-          >
-            <span>ou</span>
-          </div>
-
-          {/* Login com Google - integração futura */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
-            <GoogleLogin
-              onSuccess={() => {
-                console.log(
-                  "Autenticação Google recebida. Integração pendente.",
-                );
-              }}
-              onError={() => {
-                console.log("Falha no Login com o Google");
-              }}
-            />
-          </div>
-
-          <div
-            style={{
-              marginTop: "24px",
-              textAlign: "center",
-              fontSize: "0.85rem",
-              color: "var(--gf-text-muted)",
-            }}
-          >
-            Não tem uma conta?{" "}
-            <Link
-              to="/registro"
-              style={{
-                color: "var(--gf-primary-dark)",
-                fontWeight: "bold",
-              }}
-            >
-              Crie uma nova conta agora
-            </Link>
-          </div>
+          <div className="gf-auth-footer"><span>Ainda não tem uma conta?</span> <Link to="/registro">Criar conta gratuitamente <ArrowRight size={15}/></Link></div>
+          <p className="gf-auth-note"><ShieldCheck size={15}/> Suas informações de acesso são tratadas pelo servidor.</p>
         </div>
-      </div>
-    </div>
+        <div className="gf-auth-footer-bottom">© {new Date().getFullYear()} GearFlow • Feito para simplificar sua rotina.</div>
+      </section>
+    </main>
   );
 }

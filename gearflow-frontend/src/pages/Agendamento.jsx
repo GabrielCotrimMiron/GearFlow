@@ -1,281 +1,203 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
-import {
-    gerarAutorizacaoBasica,
-    obterCredenciais,
-} from "../services/clienteAuth";
-import "./Veiculos.css";
+import "./Agendamento.css";
+
+function dataLocalHoje() {
+  const agora = new Date();
+  const local = new Date(agora.getTime() - agora.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+function dataLegivel(valor) {
+  if (!valor) return "A definir";
+  const [ano, mes, dia] = valor.split("-").map(Number);
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(ano, mes - 1, dia));
+}
 
 export default function AgendamentoCliente() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const [veiculos, setVeiculos] = useState([]);
+  const [horarios, setHorarios] = useState([]);
+  const [carregandoVeiculos, setCarregandoVeiculos] = useState(true);
+  const [buscandoHorarios, setBuscandoHorarios] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState("");
+  const [erroHorarios, setErroHorarios] = useState("");
+  const [sucesso, setSucesso] = useState(false);
+  const [form, setForm] = useState({ veiculoId: "", dataAgendamento: "", horario: "", motivo: "" });
+  const hoje = dataLocalHoje();
 
-    const [veiculos, setVeiculos] = useState([]);
-    const [horarios, setHorarios] = useState([]);
-
-    const [carregandoVeiculos, setCarregandoVeiculos] = useState(true);
-    const [buscandoHorarios, setBuscandoHorarios] = useState(false);
-    const [salvando, setSalvando] = useState(false);
-    const [erro, setErro] = useState("");
-    const [sucesso, setSucesso] = useState(false);
-
-    const [form, setForm] = useState({
-        veiculoId: "",
-        dataAgendamento: "",
-        horario: "",
-        motivo: "",
-    });
-
-    useEffect(() => {
-        if (!obterCredenciais()) {
-            navigate("/", { replace: true });
-            return;
-        }
-
-        async function carregarVeiculos() {
-            try {
-                const response = await api.get("/veiculos/meus", {
-                    headers: { Authorization: gerarAutorizacaoBasica() },
-                });
-                const frota = Array.isArray(response.data) ? response.data : [];
-                setVeiculos(frota);
-
-                if (frota.length === 1) {
-                    setForm((prev) => ({ ...prev, veiculoId: frota[0].id }));
-                }
-            } catch (error) {
-                console.error("Erro ao carregar veículos:", error);
-                setErro("Não foi possível carregar seus veículos. Verifique sua conexão.");
-            } finally {
-                setCarregandoVeiculos(false);
-            }
-        }
-        carregarVeiculos();
-    }, [navigate]);
-
-    useEffect(() => {
-        if (!form.dataAgendamento) {
-            setHorarios([]);
-            return;
-        }
-
-        async function buscarHorarios() {
-            setBuscandoHorarios(true);
-            setForm((prev) => ({ ...prev, horario: "" }));
-
-            try {
-                const response = await api.get(
-                    `/agendamentos/horarios-disponiveis?data=${form.dataAgendamento}`,
-                    { headers: { Authorization: gerarAutorizacaoBasica() } }
-                );
-                setHorarios(Array.isArray(response.data) ? response.data : []);
-            } catch (error) {
-                console.error("Erro ao buscar horários:", error);
-                setHorarios([]);
-            } finally {
-                setBuscandoHorarios(false);
-            }
-        }
-
-        buscarHorarios();
-    }, [form.dataAgendamento]);
-
-    async function handleAgendar(evento) {
-        evento.preventDefault();
-        setSalvando(true);
-        setErro("");
-
-        try {
-            const payload = {
-                veiculo: { id: Number(form.veiculoId) },
-                dataAgendamento: form.dataAgendamento,
-                horario: form.horario,
-                motivo: form.motivo,
-            };
-
-            await api.post("/agendamentos/meus", payload, {
-                headers: { Authorization: gerarAutorizacaoBasica() },
-            });
-
-            setSucesso(true);
-        } catch (error) {
-            console.error("Erro ao agendar:", error);
-            setErro(
-                error.response?.data?.message ||
-                "Não foi possível concluir o agendamento. Verifique se o horário ainda está livre."
-            );
-            setSalvando(false);
-        }
+  useEffect(() => {
+    let ativo = true;
+    async function carregar() {
+      try {
+        const { data } = await api.get("/veiculos/meus");
+        if (!ativo) return;
+        const lista = Array.isArray(data) ? data : [];
+        setVeiculos(lista);
+        if (lista.length === 1) setForm((anterior) => ({ ...anterior, veiculoId: String(lista[0].id) }));
+      } catch {
+        if (ativo) setErro("Não foi possível carregar seus veículos. Tente atualizar a página.");
+      } finally {
+        if (ativo) setCarregandoVeiculos(false);
+      }
     }
+    carregar();
+    return () => { ativo = false; };
+  }, []);
 
-    const hoje = new Date().toISOString().split("T")[0];
-
-    if (sucesso) {
-        return (
-            <DashboardLayout
-                titulo="Agendar Consulta"
-                subtitulo="Marque um horário para o seu veículo na oficina."
-                tipoUsuario="CLIENTE"
-            >
-                <div className="veiculos-pagina">
-                    <div className="veiculos-vazio">
-                        <span style={{ fontSize: "32px", color: "#278f8b", display: "block", marginBottom: "15px" }}>✓</span>
-                        <strong style={{ fontSize: "18px", color: "#2a4454" }}>Agendamento solicitado com sucesso!</strong>
-                        <p style={{ marginTop: "8px", marginBottom: "24px" }}>
-                            Sua solicitação foi enviada para a oficina. Assim que aprovada, uma nova Ordem de Serviço será gerada.
-                        </p>
-                        <button
-                            type="button"
-                            className="veiculos-btn veiculos-btn-primario"
-                            onClick={() => navigate("/cliente")}
-                        >
-                            Voltar ao Painel
-                        </button>
-                    </div>
-                </div>
-            </DashboardLayout>
-        );
+  useEffect(() => {
+    if (!form.dataAgendamento) {
+      setHorarios([]);
+      setErroHorarios("");
+      setBuscandoHorarios(false);
+      return;
     }
+    const controller = new AbortController();
+    setHorarios([]);
+    setErroHorarios("");
+    setBuscandoHorarios(true);
+    setForm((anterior) => ({ ...anterior, horario: "" }));
+    async function buscar() {
+      try {
+        const { data } = await api.get("/agendamentos/horarios-disponiveis", {
+          params: { data: form.dataAgendamento }, signal: controller.signal,
+        });
+        if (!controller.signal.aborted) setHorarios(Array.isArray(data) ? data : []);
+      } catch {
+        if (!controller.signal.aborted) setErroHorarios("Não foi possível consultar os horários. Selecione outra data ou tente novamente.");
+      } finally {
+        if (!controller.signal.aborted) setBuscandoHorarios(false);
+      }
+    }
+    buscar();
+    return () => controller.abort();
+  }, [form.dataAgendamento]);
 
-    return (
-        <DashboardLayout
-            titulo="Agendar Consulta"
-            subtitulo="Marque um horário para o seu veículo na oficina."
-            tipoUsuario="CLIENTE"
-        >
-            <div className="veiculos-pagina">
-                <section className="veiculos-topo">
-                    <div>
-                        <span className="veiculos-eyebrow">NOVA SOLICITAÇÃO</span>
-                        <h2>Agendar Serviço na Oficina</h2>
-                        <p>
-                            Escolha seu veículo, a data desejada e o melhor horário disponível para atendimento.
-                        </p>
-                    </div>
-                </section>
+  const veiculoSelecionado = useMemo(
+    () => veiculos.find((veiculo) => String(veiculo.id) === String(form.veiculoId)),
+    [veiculos, form.veiculoId]
+  );
+  const podeEnviar = Boolean(form.veiculoId && form.dataAgendamento && form.horario && !salvando && !buscandoHorarios);
 
-                {erro && <div className="veiculos-alerta-erro">{erro}</div>}
+  async function enviar(evento) {
+    evento.preventDefault();
+    if (!podeEnviar) return;
+    setErro("");
+    setSalvando(true);
+    try {
+      await api.post("/agendamentos/meus", {
+        veiculo: { id: Number(form.veiculoId) },
+        dataAgendamento: form.dataAgendamento,
+        horario: form.horario,
+        motivo: form.motivo.trim(),
+      });
+      setSucesso(true);
+    } catch (error) {
+      const mensagem = error.response?.data?.message;
+      setErro(typeof mensagem === "string" ? mensagem : "Não foi possível enviar a solicitação. O horário pode ter sido ocupado; confira a disponibilidade e tente novamente.");
+    } finally {
+      setSalvando(false);
+    }
+  }
 
-                {carregandoVeiculos ? (
-                    <div className="veiculos-vazio">Carregando formulário...</div>
-                ) : veiculos.length === 0 ? (
-                    <div className="veiculos-vazio">
-                        <strong>Nenhum veículo cadastrado.</strong>
-                        <p>Você precisa de um veículo cadastrado para solicitar um agendamento.</p>
-                        <button
-                            type="button"
-                            className="veiculos-btn veiculos-btn-primario"
-                            style={{ marginTop: "15px" }}
-                            onClick={() => navigate("/cliente/veiculos")}
-                        >
-                            Ir para Meus Veículos
-                        </button>
-                    </div>
-                ) : (
-                    <form className="veiculos-form-card" onSubmit={handleAgendar}>
-                        <h3>Detalhes do Agendamento</h3>
+  function atualizar(campo, valor) {
+    setErro("");
+    setForm((anterior) => ({ ...anterior, [campo]: valor }));
+  }
 
-                        <div className="veiculos-form-grid" style={{ gridTemplateColumns: "1fr" }}>
-                            <div className="veiculos-campo">
-                                <label>Veículo *</label>
-                                <select
-                                    required
-                                    value={form.veiculoId}
-                                    onChange={(e) => setForm({ ...form, veiculoId: e.target.value })}
-                                >
-                                    <option value="" disabled>Selecione um veículo...</option>
-                                    {veiculos.map((v) => (
-                                        <option key={v.id} value={v.id}>
-                                            {v.placa} — {v.marca} {v.modelo}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
+  return (
+    <DashboardLayout tipoUsuario="CLIENTE" titulo="Agendar consulta" subtitulo="Escolha um horário para atendimento do seu veículo.">
+      <main className="agendar-page">
+        <header className="agendar-hero">
+          <div>
+            <span className="agendar-kicker">AGENDAMENTO ONLINE</span>
+            <h2>{sucesso ? "Solicitação enviada!" : "Vamos cuidar do seu veículo?"}</h2>
+            <p>{sucesso ? "A oficina recebeu seu pedido de agendamento." : "Em poucos passos, escolha o veículo, encontre um horário e conte o que precisa."}</p>
+          </div>
+          <div className="agendar-hero-mark" aria-hidden="true">✦</div>
+        </header>
 
-                        <div className="veiculos-form-grid">
-                            <div className="veiculos-campo">
-                                <label>Data Desejada *</label>
-                                <input
-                                    type="date"
-                                    required
-                                    min={hoje}
-                                    value={form.dataAgendamento}
-                                    onChange={(e) => setForm({ ...form, dataAgendamento: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="veiculos-campo">
-                                <label>Horário *</label>
-                                <select
-                                    required
-                                    disabled={!form.dataAgendamento || buscandoHorarios}
-                                    value={form.horario}
-                                    onChange={(e) => setForm({ ...form, horario: e.target.value })}
-                                    style={{ opacity: (!form.dataAgendamento || buscandoHorarios) ? 0.6 : 1 }}
-                                >
-                                    <option value="" disabled>
-                                        {buscandoHorarios
-                                            ? "Buscando horários..."
-                                            : !form.dataAgendamento
-                                                ? "Selecione a data primeiro"
-                                                : horarios.length === 0
-                                                    ? "Nenhum horário livre"
-                                                    : "Escolha um horário..."}
-                                    </option>
-                                    {horarios.map((hora) => {
-                                        const horaFormatada = hora.substring(0, 5);
-                                        return (
-                                            <option key={hora} value={horaFormatada}>
-                                                {horaFormatada}
-                                            </option>
-                                        );
-                                    })}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="veiculos-form-grid" style={{ gridTemplateColumns: "1fr" }}>
-                            <div className="veiculos-campo">
-                                <label>Descrição do Problema ou Serviço Solicitado (Opcional)</label>
-                                <textarea
-                                    placeholder="Ex: Troca de óleo, revisão dos 50 mil km, barulho na suspensão..."
-                                    rows={4}
-                                    value={form.motivo}
-                                    onChange={(e) => setForm({ ...form, motivo: e.target.value })}
-                                    style={{
-                                        padding: "12px",
-                                        border: "1px solid #dce5e8",
-                                        borderRadius: "8px",
-                                        fontSize: "13px",
-                                        fontFamily: "inherit",
-                                        resize: "vertical"
-                                    }}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="veiculos-form-rodape">
-                            <button
-                                type="button"
-                                className="veiculos-btn veiculos-btn-secundario"
-                                onClick={() => navigate("/cliente")}
-                                disabled={salvando}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                className="veiculos-btn veiculos-btn-primario"
-                                disabled={salvando || horarios.length === 0}
-                            >
-                                {salvando ? "Enviando..." : "Confirmar Agendamento"}
-                            </button>
-                        </div>
-                    </form>
-                )}
+        {sucesso ? (
+          <section className="agendar-success" role="status">
+            <div className="agendar-success-icon" aria-hidden="true">✓</div>
+            <h3>Agendamento solicitado com sucesso</h3>
+            <p>Seu pedido foi enviado. Aguarde a análise e aprovação da oficina; o envio não significa que o horário já foi confirmado.</p>
+            <div className="agendar-success-details">
+              <span><small>Veículo</small><strong>{veiculoSelecionado ? `${veiculoSelecionado.marca} ${veiculoSelecionado.modelo} · ${veiculoSelecionado.placa}` : "Veículo selecionado"}</strong></span>
+              <span><small>Data</small><strong>{dataLegivel(form.dataAgendamento)}</strong></span>
+              <span><small>Horário</small><strong>{form.horario}</strong></span>
             </div>
-        </DashboardLayout>
-    );
+            <button className="agendar-primary" type="button" onClick={() => navigate("/DashboardCliente")}>Voltar à visão geral</button>
+          </section>
+        ) : carregandoVeiculos ? (
+          <section className="agendar-state" role="status">Carregando seus veículos e preparando o formulário...</section>
+        ) : veiculos.length === 0 ? (
+          <section className="agendar-state">
+            <div className="agendar-state-icon" aria-hidden="true">🚗</div>
+            <h3>Cadastre um veículo primeiro</h3>
+            <p>Para agendar um atendimento, você precisa ter pelo menos um veículo cadastrado.</p>
+            {erro && <p className="agendar-error" role="alert">{erro}</p>}
+            <button type="button" className="agendar-primary" onClick={() => navigate("/cliente/veiculos")}>Ir para Meus Veículos</button>
+          </section>
+        ) : (
+          <div className="agendar-layout">
+            <form className="agendar-form" onSubmit={enviar}>
+              {erro && <div className="agendar-error" role="alert">{erro}</div>}
+
+              <section className="agendar-section">
+                <div className="agendar-section-head"><span className="agendar-step">01</span><div><h3>Qual veículo será atendido?</h3><p>Selecione um dos veículos cadastrados na sua conta.</p></div></div>
+                <div className="agendar-vehicle-grid" role="group" aria-label="Selecione um veículo">
+                  {veiculos.map((veiculo) => (
+                    <label key={veiculo.id} className={`agendar-vehicle ${String(form.veiculoId) === String(veiculo.id) ? "is-selected" : ""}`}>
+                      <input type="radio" name="veiculo" value={veiculo.id} checked={String(form.veiculoId) === String(veiculo.id)} onChange={() => atualizar("veiculoId", String(veiculo.id))} required />
+                      <span className="agendar-vehicle-symbol" aria-hidden="true">🚘</span>
+                      <span className="agendar-vehicle-info"><strong>{veiculo.marca} {veiculo.modelo}</strong><small>Placa {veiculo.placa || "não informada"}</small></span>
+                      <span className="agendar-check" aria-hidden="true">✓</span>
+                    </label>
+                  ))}
+                </div>
+              </section>
+
+              <section className="agendar-section">
+                <div className="agendar-section-head"><span className="agendar-step">02</span><div><h3>Quando você deseja vir?</h3><p>Escolha uma data e selecione um dos horários disponíveis.</p></div></div>
+                <label className="agendar-field" htmlFor="agendar-data"><span>Data desejada <b>*</b></span><input id="agendar-data" type="date" min={hoje} value={form.dataAgendamento} onChange={(e) => atualizar("dataAgendamento", e.target.value)} required /></label>
+                <div className="agendar-time-head"><strong>Horários disponíveis</strong>{form.dataAgendamento && !buscandoHorarios && !erroHorarios && <small>{horarios.length} opções</small>}</div>
+                {!form.dataAgendamento ? <div className="agendar-hint">Selecione uma data para visualizar os horários.</div>
+                  : buscandoHorarios ? <div className="agendar-hint" role="status">Consultando horários disponíveis...</div>
+                  : erroHorarios ? <div className="agendar-error" role="alert">{erroHorarios}</div>
+                  : horarios.length === 0 ? <div className="agendar-hint">Não há horários disponíveis nessa data. Experimente outro dia.</div>
+                  : <div className="agendar-times" role="group" aria-label="Escolha o horário">
+                    {horarios.map((hora) => {
+                      const horario = String(hora).slice(0, 5);
+                      return <label key={String(hora)} className={`agendar-time ${form.horario === horario ? "is-selected" : ""}`}>
+                        <input type="radio" name="horario" value={horario} checked={form.horario === horario} onChange={() => atualizar("horario", horario)} required />{horario}
+                      </label>;
+                    })}
+                  </div>}
+              </section>
+
+              <section className="agendar-section">
+                <div className="agendar-section-head"><span className="agendar-step">03</span><div><h3>Como podemos ajudar?</h3><p>Conte brevemente o motivo da visita. Esse campo é opcional.</p></div></div>
+                <label className="agendar-field" htmlFor="agendar-motivo"><span>Descrição do serviço ou problema</span><textarea id="agendar-motivo" rows={5} maxLength={1000} placeholder="Ex.: revisão preventiva, troca de óleo, barulho ao frear..." value={form.motivo} onChange={(e) => atualizar("motivo", e.target.value)} /><small className="agendar-character-count">{form.motivo.length}/1000 caracteres</small></label>
+              </section>
+
+              <div className="agendar-form-actions"><button className="agendar-secondary" type="button" onClick={() => navigate("/DashboardCliente")} disabled={salvando}>Voltar</button><button className="agendar-primary" type="submit" disabled={!podeEnviar}>{salvando ? "Enviando solicitação..." : "Solicitar agendamento"}</button></div>
+            </form>
+
+            <aside className="agendar-aside" aria-label="Resumo do agendamento">
+              <section className="agendar-summary"><span className="agendar-summary-kicker">RESUMO</span><h3>Seu agendamento</h3><p>Confira as informações antes de enviar.</p>
+                <div className="agendar-summary-row"><span>Veículo</span><strong>{veiculoSelecionado ? `${veiculoSelecionado.marca} ${veiculoSelecionado.modelo}` : "Não selecionado"}</strong>{veiculoSelecionado && <small>{veiculoSelecionado.placa}</small>}</div>
+                <div className="agendar-summary-row"><span>Data</span><strong>{dataLegivel(form.dataAgendamento)}</strong></div>
+                <div className="agendar-summary-row"><span>Horário</span><strong>{form.horario || "A definir"}</strong></div>
+                <div className="agendar-summary-note"><strong>Como funciona?</strong><p>Após o envio, a oficina analisará a solicitação. Aguarde a confirmação do atendimento.</p></div>
+              </section>
+            </aside>
+          </div>
+        )}
+      </main>
+    </DashboardLayout>
+  );
 }

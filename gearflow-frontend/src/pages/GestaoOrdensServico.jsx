@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
-import { gerarAutorizacaoBasica } from "../services/clienteAuth";
+
 import "./GestaoOrdensServicoRF09.css";
 
 const moeda = (valor) =>
@@ -61,6 +62,7 @@ function Aviso({ tipo = "erro", children }) {
 }
 
 export default function GestaoOrdensServico() {
+  const navigate = useNavigate();
   const [ordens, setOrdens] = useState([]);
   const [veiculos, setVeiculos] = useState([]);
   const [funcionarios, setFuncionarios] = useState([]);
@@ -91,7 +93,7 @@ export default function GestaoOrdensServico() {
   const [alterandoPrioridade, setAlterandoPrioridade] = useState(null);
 
   const auth = () => ({
-    Authorization: gerarAutorizacaoBasica(),
+    "X-Client": "GearFlow",
   });
 
   const carregarDados = async (inicial = false) => {
@@ -618,6 +620,14 @@ export default function GestaoOrdensServico() {
                   </select>
                 </div>
 
+                <button
+                  type="button"
+                  className="gf-btn-detalhes"
+                  onClick={() => navigate(`/inspecao-3d/${os.id}`)}
+                  style={{ marginRight: 8 }}
+                >
+                  ◈ Inspeção 3D
+                </button>
                 <button
                   type="button"
                   className="gf-btn-detalhes"

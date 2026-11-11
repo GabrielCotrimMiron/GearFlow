@@ -2,11 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
-import {
-    gerarAutorizacaoBasica,
-    obterCredenciais,
-} from "../services/clienteAuth";
 import "./Veiculos.css";
+import "./ClienteRefresh.css";
 
 export default function MeusVeiculos() {
     const navigate = useNavigate();
@@ -36,7 +33,7 @@ export default function MeusVeiculos() {
         setErro("");
         try {
             const response = await api.get("/veiculos/meus", {
-                headers: { Authorization: gerarAutorizacaoBasica() },
+                headers: {},
             });
             setVeiculos(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
@@ -51,10 +48,7 @@ export default function MeusVeiculos() {
     }
 
     useEffect(() => {
-        if (!obterCredenciais()) {
-            navigate("/", { replace: true });
-            return;
-        }
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         carregarMeusVeiculos();
     }, [navigate]);
 
@@ -75,7 +69,7 @@ export default function MeusVeiculos() {
             };
 
             await api.post("/veiculos/meus", payload, {
-                headers: { Authorization: gerarAutorizacaoBasica() },
+                headers: {},
             });
 
             setSucesso("Veículo cadastrado e vinculado à sua conta com sucesso!");
@@ -106,7 +100,7 @@ export default function MeusVeiculos() {
         setCarregandoHistorico(true);
         try {
             const response = await api.get(`/veiculos/${veiculo.id}/historico`, {
-                headers: { Authorization: gerarAutorizacaoBasica() },
+                headers: {},
             });
             setHistorico(Array.isArray(response.data) ? response.data : []);
         } catch (error) {

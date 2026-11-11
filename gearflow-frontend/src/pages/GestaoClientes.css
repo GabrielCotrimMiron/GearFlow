@@ -1,0 +1,339 @@
+.gclientes {
+    color: #203044;
+    max-width: 1260px;
+    margin: auto
+}
+
+.gclientes-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px
+}
+
+.gclientes-kicker {
+    font-size: 11px;
+    letter-spacing: .12em;
+    font-weight: 800;
+    color: #008f88
+}
+
+.gclientes h2 {
+    font-size: 26px;
+    margin: 6px 0
+}
+
+.gclientes p {
+    color: #64748b;
+    margin: 5px 0
+}
+
+.gclientes-btn {
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 11px 16px;
+    font-weight: 750;
+    font-family: inherit;
+    background: white;
+    color: #213346;
+    white-space: nowrap
+}
+
+.gclientes-btn.primary {
+    background: #087f78;
+    color: white
+}
+
+.gclientes-btn.primary:hover {
+    background: #056962
+}
+
+.gclientes-btn.outline {
+    border-color: #dce5e8
+}
+
+.gclientes-btn.outline:hover {
+    background: #f2f8f7
+}
+
+.gclientes-btn.danger {
+    border-color: #f1d3d4;
+    color: #c23b44
+}
+
+.gclientes-btn.danger-filled {
+    background: #bd303e;
+    color: white
+}
+
+.gclientes-btn.small {
+    font-size: 12px;
+    padding: 8px 12px
+}
+
+.gclientes-btn:disabled {
+    opacity: .55;
+    cursor: not-allowed
+}
+
+.gclientes-indicadores {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 20px
+}
+
+.gclientes-indicadores>div {
+    background: linear-gradient(130deg, #f0faf8, #fff);
+    border: 1px solid #deeeeb;
+    border-radius: 16px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px
+}
+
+.gclientes-indicadores small {
+    font-size: 10px;
+    font-weight: 800;
+    color: #69857f;
+    letter-spacing: .07em
+}
+
+.gclientes-indicadores strong {
+    font-size: 30px;
+    color: #116e6a
+}
+
+.gclientes-indicadores span {
+    font-size: 12px;
+    color: #718096
+}
+
+.gclientes-ferramentas {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px
+}
+
+.gclientes-ferramentas label {
+    font-weight: 700;
+    font-size: 13px
+}
+
+.gclientes-ferramentas input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #dbe4e8;
+    background: white;
+    color: #243446
+}
+
+.gclientes-tabela-wrap {
+    overflow-x: auto;
+    border: 1px solid #e0e9ec;
+    border-radius: 14px;
+    background: white
+}
+
+.gclientes-tabela {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    min-width: 740px
+}
+
+.gclientes-tabela th {
+    background: #f5f9fa;
+    color: #64788a;
+    font-size: 11px;
+    letter-spacing: .055em;
+    padding: 15px 16px
+}
+
+.gclientes-tabela td {
+    padding: 16px;
+    border-top: 1px solid #ecf0f2;
+    font-size: 13px;
+    vertical-align: middle
+}
+
+.gclientes-nome {
+    display: flex;
+    gap: 10px;
+    align-items: center
+}
+
+.gclientes-avatar {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: #dff4ed;
+    color: #087f78;
+    font-weight: 800
+}
+
+.gclientes-nome>div,
+.gclientes-contato {
+    display: flex;
+    flex-direction: column;
+    gap: 4px
+}
+
+.gclientes-nome small,
+.gclientes-contato small {
+    color: #82909d
+}
+
+.gclientes-acoes {
+    display: flex;
+    gap: 8px
+}
+
+.gclientes-vazio {
+    text-align: center !important;
+    padding: 38px !important;
+    color: #778694
+}
+
+.gclientes-nota {
+    font-size: 12px;
+    margin: 15px 2px !important
+}
+
+.gclientes-feedback {
+    border-radius: 10px;
+    padding: 12px 15px;
+    margin-bottom: 16px;
+    font-size: 13px
+}
+
+.gclientes-feedback.erro {
+    background: #fff2f2;
+    color: #a32c3a;
+    border: 1px solid #ffd4d4
+}
+
+.gclientes-feedback.sucesso {
+    background: #eaf8f1;
+    color: #166d4d;
+    border: 1px solid #c4e9d8
+}
+
+.gclientes-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(18, 33, 46, .64);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px
+}
+
+.gclientes-modal {
+    width: min(580px, 100%);
+    max-height: 92vh;
+    overflow: auto;
+    border-radius: 19px;
+    background: white;
+    padding: 26px;
+    box-shadow: 0 25px 70px #0018
+}
+
+.gclientes-modal.pequena {
+    max-width: 450px
+}
+
+.gclientes-modal h3 {
+    font-size: 21px;
+    margin: 7px 0 14px
+}
+
+.gclientes-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start
+}
+
+.gclientes-modal-head>button {
+    font-size: 25px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    color: #627386
+}
+
+.gclientes-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px
+}
+
+.gclientes-form-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 750;
+    color: #425364
+}
+
+.gclientes-form-grid input {
+    border-radius: 9px;
+    border: 1px solid #d7e2e5;
+    padding: 12px;
+    color: #263648;
+    min-width: 0
+}
+
+.gclientes-form-grid label:first-child,
+.gclientes-form-grid label:nth-child(2) {
+    grid-column: 1/-1
+}
+
+.gclientes-ajuda {
+    font-size: 12px;
+    margin-top: 15px !important
+}
+
+.gclientes-modal-botoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 22px
+}
+
+@media(max-width:640px) {
+    .gclientes-topo {
+        align-items: flex-start;
+        flex-direction: column
+    }
+
+    .gclientes-indicadores {
+        grid-template-columns: 1fr
+    }
+
+    .gclientes-ferramentas {
+        flex-wrap: wrap
+    }
+
+    .gclientes-ferramentas label {
+        width: 100%
+    }
+
+    .gclientes-form-grid {
+        grid-template-columns: 1fr
+    }
+
+    .gclientes-form-grid label {
+        grid-column: 1/-1
+    }
+}

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import api from "../services/api";
@@ -175,8 +174,7 @@ export default function GestaoPecas() {
 
   const valorTotal = pecas.reduce(
     (total, peca) =>
-      total +
-      Number(peca.valorUni ?? 0) * Number(peca.qtdEstoque ?? 0),
+      total + Number(peca.valorUni ?? 0) * Number(peca.qtdEstoque ?? 0),
     0,
   );
 

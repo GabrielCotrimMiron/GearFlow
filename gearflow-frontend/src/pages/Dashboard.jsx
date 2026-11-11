@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
-import { gerarAutorizacaoBasica } from "../services/clienteAuth";
+
 import "./Dashboard.css";
 
-const API = "http://localhost:8080";
+const API = "/api";
 const MESES = [
   "Jan",
   "Fev",
@@ -62,9 +62,9 @@ const atalhos = [
   },
 ];
 
-async function buscarFinanceiro(caminho, authorization) {
-  const resposta = await fetch(`${API}${caminho}`, {
-    headers: { Authorization: authorization },
+async function buscarFinanceiro(caminho) {
+  const resposta = await fetch(`${API}${caminho}`, { credentials: "same-origin",
+    headers: { "X-Client": "GearFlow" },
     cache: "no-store",
   });
   if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
@@ -141,32 +141,27 @@ export default function Dashboard() {
   const [atualizando, setAtualizando] = useState(false);
   const [atualizadoEm, setAtualizadoEm] = useState(null);
   const [periodo, setPeriodo] = useState(6);
+  const [clientesAdmin, setClientesAdmin] = useState(null);
 
   const carregarDados = useCallback(async (atualizacao = false) => {
     if (atualizacao) setAtualizando(true);
     else setCarregando(true);
-    const authorization = gerarAutorizacaoBasica();
-    if (!authorization) {
-      setFalhas(["Sessão não encontrada. Faça login novamente."]);
-      setCarregando(false);
-      setAtualizando(false);
-      return;
-    }
+
     const tarefas = [
       [
         "historico",
         "Histórico financeiro",
-        () => buscarFinanceiro("/financeiro/historico", authorization),
+        () => buscarFinanceiro("/financeiro/historico"),
       ],
       [
         "resultado",
         "Resultado financeiro",
-        () => buscarFinanceiro("/financeiro/resultado", authorization),
+        () => buscarFinanceiro("/financeiro/resultado"),
       ],
       [
         "despesas",
         "Despesas",
-        () => buscarFinanceiro("/financeiro/despesas", authorization),
+        () => buscarFinanceiro("/financeiro/despesas"),
       ],
       ["pecas", "Peças", () => api.get("/pecas").then((r) => r.data)],
       ["servicos", "Serviços", () => api.get("/servicos").then((r) => r.data)],
@@ -197,6 +192,20 @@ export default function Dashboard() {
       setCarregando(false);
       setAtualizando(false);
     }
+  }, []);
+
+  useEffect(() => {
+    let ativo = true;
+    api.get("/admin/clientes")
+      .then(({ data }) => {
+        if (!ativo) return;
+        const clientes = lista(data);
+        setClientesAdmin(clientes.length);
+      })
+      .catch(() => {
+        if (ativo) setClientesAdmin(null);
+      });
+    return () => { ativo = false; };
   }, []);
 
   useEffect(() => {
@@ -527,6 +536,19 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="dashboard-atalhos">
+          {clientesAdmin !== null && (
+            <Link className="dashboard-atalho dashboard-atalho-clientes" to="/clientes-admin">
+              <span className="dashboard-atalho-icone" aria-hidden="true">♙</span>
+              <div>
+                <strong>Gestão de clientes</strong>
+                <span>Cadastros, contatos e veículos</span>
+                <span className="dashboard-atalho-contagem">
+                  {clientesAdmin} {clientesAdmin === 1 ? "cliente cadastrado" : "clientes cadastrados"}
+                </span>
+              </div>
+              <span className="dashboard-atalho-seta" aria-hidden="true">→</span>
+            </Link>
+          )}
           {atalhos.map((a) => (
             <Link className="dashboard-atalho" to={a.caminho} key={a.caminho}>
               <span className="dashboard-atalho-icone">{a.icone}</span>

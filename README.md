@@ -1,172 +1,186 @@
-
 # 🔧 GearFlow
 
 **Sistema de Gerenciamento de Oficina Mecânica**
 
-Projeto acadêmico desenvolvido para a disciplina de **Programação Orientada a Objetos II (POO II)**, do curso de Engenharia de Software da **Universidade Tecnológica Federal do Paraná (UTFPR) — Campus Cornélio Procópio**.
+Projeto acadêmico desenvolvido para a disciplina de **Programação
+Orientada a Objetos II (POO II)**, do curso de Engenharia de Software da
+**Universidade Tecnológica Federal do Paraná (UTFPR) --- Campus Cornélio
+Procópio**.
 
-> 🚧 **Status:** Em desenvolvimento. O sistema está sendo implementado gradualmente, conforme os requisitos funcionais definidos para o projeto.
+> 🚧 **Status:** Em desenvolvimento. As funcionalidades recentes estão
+> em fase de integração e validação. O projeto é acadêmico e não está
+> preparado para produção.
 
----
+------------------------------------------------------------------------
 
 ## 📖 Sobre o Projeto
 
-O **GearFlow** é um sistema voltado ao gerenciamento de oficinas mecânicas, com o objetivo de centralizar informações e facilitar a organização dos processos internos.
+O **GearFlow** é um sistema voltado ao gerenciamento de oficinas
+mecânicas, com o objetivo de centralizar informações e facilitar a
+organização dos processos internos.
 
-A proposta contempla o gerenciamento de clientes, veículos, funcionários, peças, serviços e ordens de serviço, proporcionando maior controle sobre os atendimentos realizados.
+A proposta contempla o gerenciamento de clientes, veículos,
+funcionários, peças, serviços e ordens de serviço, proporcionando maior
+controle sobre os atendimentos realizados.
 
-O desenvolvimento utiliza conceitos de **Programação Orientada a Objetos**, arquitetura em camadas, persistência de dados e desenvolvimento de APIs REST.
+O desenvolvimento utiliza conceitos de **Programação Orientada a
+Objetos**, arquitetura em camadas, persistência de dados e
+desenvolvimento de APIs REST.
 
 ## 🎯 Objetivos
 
-- Organizar o gerenciamento de uma oficina mecânica.
-- Centralizar informações de clientes e veículos.
-- Facilitar o controle de ordens de serviço.
-- Permitir o acompanhamento dos serviços pelos clientes.
-- Aplicar conceitos de orientação a objetos e persistência de dados.
-- Desenvolver uma aplicação modular e de fácil manutenção.
+-   Organizar o gerenciamento de uma oficina mecânica.
+-   Centralizar informações de clientes e veículos.
+-   Facilitar o controle de ordens de serviço.
+-   Permitir o acompanhamento dos serviços pelos clientes.
+-   Aplicar conceitos de orientação a objetos e persistência de dados.
+-   Desenvolver uma aplicação modular e de fácil manutenção.
 
----
+------------------------------------------------------------------------
 
 ## 🛠️ Tecnologias Utilizadas
 
-| Tecnologia | Finalidade |
-|---|---|
-| Java 25 | Linguagem principal |
-| Spring Boot 4.1.1 | Framework de desenvolvimento |
-| Spring Web MVC | Desenvolvimento da API REST |
-| Spring Data JPA | Persistência de dados |
-| Hibernate | Mapeamento objeto-relacional |
-| Spring Security | Autenticação e controle de acesso |
-| MySQL | Banco de dados relacional |
-| Maven | Gerenciamento de dependências |
-| Lombok | Redução de código repetitivo |
-| JUnit 5 | Testes automatizados |
-| Mockito | Simulação de dependências nos testes |
-| Postman | Testes de requisições HTTP |
-| Git e GitHub | Versionamento e colaboração |
+  -----------------------------------------------------------------------
+  Tecnologia                          Finalidade
+  ----------------------------------- -----------------------------------
+  Java 25 e Spring Boot 4.1.1         Backend (versões informadas no
+                                      README anterior; confirmar em
+                                      `pom.xml`)
 
----
+  Spring Web MVC, Spring Data JPA e   API REST e persistência
+  Hibernate
+
+  Spring Security                     Autenticação e autorização
+
+  MySQL                               Banco de dados
+
+  React, Vite e React Router          Interface web e navegação
+
+  CSS e Lucide React                  Estilização e ícones
+
+  Three.js, React Three Fiber e Drei  Inspeção 3D
+
+  Maven Wrapper e npm                 Dependências e execução
+
+  Lombok, JUnit 5 e Mockito           Apoio ao desenvolvimento e testes
+
+  Postman, Git e GitHub               Testes manuais e colaboração
+  -----------------------------------------------------------------------
+
+------------------------------------------------------------------------
 
 ## 📋 Funcionalidades
 
-### ✅ Implementadas e Validadas
+O projeto reúne módulos para três perfis: **cliente**, **funcionário** e
+**gerente**.
 
-**RF01 — Login Administrativo**
+### Gestão administrativa e operacional
 
-- Autenticação por e-mail e senha.
-- Verificação das credenciais no banco de dados.
-- Restrição de acesso administrativo a usuários do tipo funcionário.
-- Retorno de respostas HTTP adequadas para autenticação válida e inválida.
+-   Gestão de clientes: pesquisa, cadastro, edição e exclusão, com
+    autorização de gerente.
+-   Gestão de equipe, veículos, peças, estoque e catálogo de serviços.
+-   Gestão de ordens de serviço e **RF05 --- Fila de prioridade**.
+-   **RF09 --- Fechamento de rascunho**.
+-   Dashboard geral e financeiro, com indicadores e atalhos de
+    navegação.
+-   Gestão de agendamentos.
 
-**RF12 — Acompanhamento da Ordem de Serviço**
+### Portal do cliente
 
-- Consulta de ordens de serviço por clientes autenticados.
-- Visualização do status operacional da OS.
-- Identificação do mecânico responsável.
-- Verificação de propriedade da ordem de serviço.
-- Bloqueio de consultas realizadas por clientes não autorizados.
+-   Login, cadastro e recuperação da sessão autenticada.
+-   Dashboard com veículos, ordens de serviço e agendamentos.
+-   **RF12 --- Acompanhamento de OS** e **RF13 --- Visualização de
+    orçamento**.
+-   **RF14 --- Aprovação ou rejeição de orçamento**.
+-   **RF21 --- Alertas de manutenção preventiva**.
+-   Inspeção 3D e informações de diagnóstico vinculadas ao atendimento.
 
-**RF15 — Imutabilidade de Ordem de Serviço Finalizada**
+### Regras e qualidade
 
-- Bloqueio de alterações em ordens de serviço finalizadas.
-- Impedimento da inclusão de novos itens após a finalização.
-- Proteção contra alterações de valores de itens vinculados.
-- Testes automatizados das regras de imutabilidade.
+-   **RF15 --- Imutabilidade de OS finalizada**.
+-   Regras de permissão conforme o perfil do usuário.
 
-### 🚧 Funcionalidades Planejadas
+> As telas e implementações recentes foram desenvolvidas, mas ainda
+> precisam de validação integrada de todos os fluxos e perfis antes de
+> serem consideradas uma versão estável.
 
-O escopo do projeto também contempla:
-
-- Gerenciamento de clientes e veículos.
-- Cadastro de funcionários.
-- Gerenciamento de peças e serviços.
-- Controle de ordens de serviço.
-- Gerenciamento de estoque.
-- Histórico de manutenções.
-- Orçamentos e pagamentos.
-
-> As funcionalidades planejadas serão atualizadas nesta documentação conforme forem implementadas e validadas.
-
----
+------------------------------------------------------------------------
 
 ## 🏗️ Estrutura do Projeto
 
-O backend está organizado em camadas para separar responsabilidades e facilitar a manutenção.
-
-```text
+``` text
 GearFlow/
-│
 ├── README.md
-│
+├── gearflow-frontend/
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── vite.config.js
+│   ├── public/
+│   └── src/
+│       ├── components/
+│       ├── pages/
+│       ├── services/
+│       ├── App.jsx
+│       └── main.jsx
 └── gearflow-system/
-    │
     ├── pom.xml
     ├── mvnw
     ├── mvnw.cmd
-    │
     └── src/
         ├── main/
         │   ├── java/com/gearflow/gearflow_system/
-        │   │   ├── config/
-        │   │   ├── controller/
-        │   │   ├── dto/
-        │   │   ├── model/
-        │   │   ├── repository/
-        │   │   └── service/
-        │   │
-        │   └── resources/
-        │       └── application.yml
-        │
+        │   │   ├── Configs/
+        │   │   ├── Controllers/
+        │   │   ├── DTOs/
+        │   │   ├── Models/
+        │   │   ├── Repositories/
+        │   │   └── Services/
+        │   └── resources/application.yml
         └── test/
-            └── java/com/gearflow/gearflow_system/
 ```
 
 ### Organização das Camadas
 
-- **Model:** entidades e regras de negócio.
-- **Repository:** comunicação com o banco de dados.
-- **Service:** processamento e validação das regras de negócio.
-- **Controller:** recebimento e tratamento das requisições HTTP.
-- **DTO:** transferência de dados entre a aplicação e seus consumidores.
-- **Config:** configurações da aplicação, incluindo segurança.
+-   **Model:** entidades e regras de negócio.
+-   **Repository:** comunicação com o banco de dados.
+-   **Service:** processamento e validação das regras de negócio.
+-   **Controller:** recebimento e tratamento das requisições HTTP.
+-   **DTO:** transferência de dados entre a aplicação e seus
+    consumidores.
+-   **Config:** configurações da aplicação, incluindo segurança.
 
----
+------------------------------------------------------------------------
 
 ## 🚀 Como Executar o Projeto
 
 ### Pré-requisitos
 
-- Java 25
-- MySQL
-- Git
-- IDE de sua preferência (IntelliJ IDEA, Eclipse ou VS Code)
+-   Git, MySQL e JDK compatível com `gearflow-system/pom.xml` (o README
+    anterior indicava Java 25).
+-   Node.js e npm compatíveis com `gearflow-frontend/package.json`.
+-   IDE de preferência.
 
-O projeto utiliza Maven Wrapper, portanto não é necessário instalar o Maven separadamente.
+O Maven Wrapper já está incluído no repositório.
 
-### 1. Clonar o Repositório
+### 1. Clonar o repositório
 
-```bash
+``` bash
 git clone https://github.com/GabrielCotrimMiron/GearFlow.git
+cd GearFlow
 ```
 
-Entre no diretório da aplicação:
+### 2. Configurar o banco
 
-```bash
-cd GearFlow/gearflow-system
-```
+No MySQL:
 
-### 2. Configurar o Banco de Dados
-
-No MySQL, crie o banco:
-
-```sql
+``` sql
 CREATE DATABASE IF NOT EXISTS gearflow;
 ```
 
-A configuração utilizada no desenvolvimento é:
+Verifique `gearflow-system/src/main/resources/application.yml`. Exemplo
+da configuração usada no desenvolvimento:
 
-```yaml
+``` yaml
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/gearflow
@@ -174,195 +188,241 @@ spring:
     password: ${DB_PASSWORD}
 ```
 
-A senha é obtida por meio da variável de ambiente `DB_PASSWORD`.
+Defina a variável `DB_PASSWORD` no terminal em que iniciará o backend:
+
+Git Bash:
+
+``` bash
+export DB_PASSWORD='SUA_SENHA_LOCAL'
+```
+
+PowerShell:
+
+``` powershell
+$env:DB_PASSWORD = 'SUA_SENHA_LOCAL'
+```
+
+**Nunca publique senhas reais no GitHub.** O banco e seus registros não
+são transferidos pelo Git.
+
+### 3. Executar o backend
 
 No Git Bash:
 
-```bash
-export DB_PASSWORD='SUA_SENHA_DO_MYSQL'
+``` bash
+cd gearflow-system
+./mvnw spring-boot:run
 ```
 
-> ⚠️ Não inclua senhas reais ou outras informações sensíveis no repositório.
+No PowerShell, dentro de `gearflow-system`:
 
-### 3. Executar a Aplicação
-
-No Windows, utilizando Git Bash:
-
-```bash
-./mvnw.cmd spring-boot:run
+``` powershell
+.\mvnw.cmd spring-boot:run
 ```
 
-A aplicação será iniciada, por padrão, em:
+API esperada: `http://localhost:8080`.
 
-```text
-http://localhost:8080
+### 4. Executar o frontend
+
+Em outro terminal, a partir da raiz `GearFlow`:
+
+``` bash
+cd gearflow-frontend
+npm install
+npm run dev
 ```
 
----
+Abra o endereço informado pelo Vite (normalmente
+`http://localhost:5173`).
+
+Se a comunicação com a API falhar, confira o backend, `vite.config.js` e
+`src/services/api.js`.
+
+### 5. Acesso e contas de teste
+
+Utilize usuários existentes no MySQL local ou cadastre um cliente pelo
+sistema. Não há logins e senhas universais documentados. As permissões
+devem ser verificadas com contas de **cliente**, **funcionário** e
+**gerente**.
+
+------------------------------------------------------------------------
 
 ## 🌐 Endpoints da API
 
-### RF01 — Login Administrativo
+  Método   Endpoint                                Finalidade
+  -------- --------------------------------------- -------------------------------------
+  POST     `/auth/login`                           Login
+  GET      `/auth/session`                         Consultar sessão
+  POST     `/auth/logout`                          Encerrar sessão
+  GET      `/admin/clientes`                       Listagem administrativa de clientes
+  GET      `/ordens-servico/minhas`                OS do cliente autenticado
+  GET      `/ordens-servico/{id}/acompanhamento`   Acompanhamento
+  GET      `/ordens-servico/{id}/orcamento`        Orçamento
+  GET      `/ordens-servico/fila-prioridade`       Fila de prioridade
+  PUT      `/ordens-servico/{id}/prioridade`       Alterar prioridade
 
-**Endpoint:**
+A tabela resume algumas rotas; os contratos completos estão nos
+Controllers e DTOs.
 
-```http
-POST /auth/login
-```
-
-**Exemplo de requisição:**
-
-```json
-{
-  "email": "admin@exemplo.com",
-  "senha": "senha_exemplo"
-}
-```
-
-**Possíveis respostas:**
-
-| Código | Significado |
-|---|---|
-| 200 OK | Credenciais aceitas |
-| 401 Unauthorized | Credenciais inválidas ou usuário não autorizado |
-
-A autenticação administrativa atual verifica as credenciais de usuários do tipo funcionário.
-
-### RF12 — Acompanhamento da Ordem de Serviço
-
-**Endpoint:**
-
-```http
-GET /ordens-servico/{id}/acompanhamento
-```
-
-**Autenticação:** HTTP Basic Auth.
-
-O cliente deve informar seu e-mail e senha cadastrados.
-
-**Exemplo de resposta:**
-
-```json
-{
-  "ordemServicoId": 3,
-  "status": "EM_EXECUCAO",
-  "mecanicoResponsavel": "Nao atribuido"
-}
-```
-
-**Possíveis respostas:**
-
-| Código | Significado |
-|---|---|
-| 200 OK | Consulta realizada com sucesso |
-| 401 Unauthorized | Usuário não autenticado |
-| 403 Forbidden | Ordem pertencente a outro cliente |
-| 404 Not Found | Ordem de serviço inexistente |
-
-O sistema verifica se o veículo associado à ordem de serviço pertence ao cliente autenticado.
-
----
+------------------------------------------------------------------------
 
 ## 🧪 Testes Automatizados
 
-O projeto utiliza **JUnit 5** e **Mockito** para validar regras de negócio.
+O projeto utiliza **JUnit 5** e **Mockito** para validar regras de
+negócio.
 
-Para executar todos os testes:
+Para executar os testes do backend, a partir da pasta `gearflow-system`:
 
-```bash
-./mvnw.cmd clean test
+``` bash
+./mvnw test
 ```
 
-> Os testes de inicialização da aplicação dependem da disponibilidade do MySQL e da configuração correta da variável `DB_PASSWORD`.
+No PowerShell do Windows, utilize `.\\mvnw.cmd test` (sem os espaços
+externos).
 
-### Cenários Testados
+> Os testes de inicialização da aplicação dependem da disponibilidade do
+> MySQL e da configuração correta da variável `DB_PASSWORD`.
 
-**RF12 — Acompanhamento da OS**
+### Cenários documentados anteriormente
 
-- Consulta de ordem pertencente ao cliente autenticado.
-- Bloqueio de acesso a ordens de outros clientes.
-- Tratamento de ordens de serviço inexistentes.
+**RF12 --- Acompanhamento da OS**
 
-**RF15 — Imutabilidade da OS**
+-   Consulta de ordem pertencente ao cliente autenticado.
+-   Bloqueio de acesso a ordens de outros clientes.
+-   Tratamento de ordens de serviço inexistentes.
 
-- Bloqueio de alterações após finalização.
-- Bloqueio da adição de itens em ordens finalizadas.
-- Permissão de alterações em ordens em execução.
-- Bloqueio de alterações no preço de itens após finalização.
+**RF15 --- Imutabilidade da OS**
+
+-   Bloqueio de alterações após finalização.
+-   Bloqueio da adição de itens em ordens finalizadas.
+-   Permissão de alterações em ordens em execução.
+-   Bloqueio de alterações no preço de itens após finalização.
+
+### Build do frontend
+
+Na pasta `gearflow-frontend`:
+
+``` bash
+npm run build
+```
+
+Além do build, teste o login e logout, permissões, CRUD de clientes,
+orçamento, agendamentos, alertas preventivos e inspeção 3D.
 
 ### Validação pelo Postman
 
-Durante o desenvolvimento, também foram realizados testes manuais dos endpoints.
+Durante o desenvolvimento, também foram realizados testes manuais dos
+endpoints.
 
-| Funcionalidade | Cenário | Resultado |
-|---|---|---|
-| RF12 | Cliente consulta sua própria OS | 200 OK |
-| RF12 | Consulta sem autenticação | 401 Unauthorized |
-| RF12 | Consulta de OS de outro cliente | 403 Forbidden |
-| RF12 | Consulta de OS inexistente | 404 Not Found |
-| RF01 | Login administrativo válido | 200 OK |
-| RF01 | Cliente tenta realizar login administrativo | 401 Unauthorized |
+  -----------------------------------------------------------------------
+  Funcionalidade          Cenário                 Resultado
+  ----------------------- ----------------------- -----------------------
+  RF12                    Cliente consulta sua    200 OK
+                          própria OS
 
-Os cenários acima foram validados durante o desenvolvimento.
+  RF12                    Consulta sem            401 Unauthorized
+                          autenticação
 
----
+  RF12                    Consulta de OS de outro 403 Forbidden
+                          cliente
+
+  RF12                    Consulta de OS          404 Not Found
+                          inexistente
+
+  RF01                    Login administrativo    200 OK
+                          válido
+
+  RF01                    Cliente tenta realizar  401 Unauthorized
+                          login administrativo
+  -----------------------------------------------------------------------
+
+Os cenários acima foram registrados no README anterior; execute os
+testes novamente na branch atual antes de declarar a integração
+validada.
+
+------------------------------------------------------------------------
 
 ## 🔐 Segurança
 
-O GearFlow utiliza Spring Security para autenticação HTTP Basic no endpoint de acompanhamento de ordens de serviço.
+O GearFlow utiliza Spring Security e autenticação por sessão HTTP, além
+de verificações de autorização em rotas específicas.
 
-A aplicação ainda está em desenvolvimento e possui limitações de segurança, incluindo:
+**Limitações conhecidas no ambiente de desenvolvimento:** - Uso
+temporário de `NoOpPasswordEncoder` e senhas sem hash. - Regras
+permissivas para rotas não explicitamente protegidas. - Proteção CSRF
+desabilitada apesar do uso de sessão por cookie. - Necessidade de
+revisão completa de permissões, validação e tratamento de dados
+pessoais.
 
-- Utilização de senhas em texto puro.
-- Uso temporário de `NoOpPasswordEncoder`.
-- Configuração de acesso permissiva para outras rotas.
-- Ausência de uma solução completa de autenticação por sessão ou token.
+**Esta aplicação acadêmica não está pronta para produção.** Antes de uma
+implantação real, é necessário usar hash seguro de senhas, proteção CSRF
+compatível com sessão e revisar todas as regras de autorização no
+backend.
 
-Esses aspectos deverão ser aprimorados em versões futuras.
+------------------------------------------------------------------------
 
-> ⚠️ Esta versão é destinada ao ambiente acadêmico e de desenvolvimento, não sendo adequada para implantação em produção sem melhorias de segurança.
+## 🤝 Como o outro desenvolvedor atualiza o projeto
 
----
+**Não é necessário baixar os ZIPs usados durante o desenvolvimento.**
+Depois que um Pull Request for integrado à `main`, o Otávio pode
+atualizar o código com:
+
+``` bash
+git switch main
+git pull origin main
+```
+
+Na pasta `gearflow-frontend`, execute `npm install` para instalar novas
+dependências. O Maven Wrapper cuida das dependências do backend.
+
+O **MySQL e as variáveis de ambiente** precisam ser configurados em cada
+computador. O Git não transfere dados de bancos locais. Se houver
+alterações não commitadas, organize-as antes de trocar de branch.
+
+------------------------------------------------------------------------
 
 ## 🔄 Versionamento e Colaboração
 
-O projeto utiliza Git e GitHub para controle de versões e desenvolvimento colaborativo.
+O projeto utiliza Git e GitHub para controle de versões e
+desenvolvimento colaborativo.
 
-As funcionalidades são desenvolvidas em branches específicas, permitindo que as implementações sejam revisadas antes da integração à branch principal.
+As funcionalidades são desenvolvidas em branches específicas, permitindo
+que as implementações sejam revisadas antes da integração à branch
+principal.
 
 Fluxo de desenvolvimento:
 
-1. Criação de uma branch para a funcionalidade.
-2. Implementação dos requisitos.
-3. Execução dos testes automatizados.
-4. Validação dos endpoints.
-5. Criação de commits.
-6. Abertura de Pull Request.
-7. Revisão e integração à branch `main`.
+1.  Criação de uma branch para a funcionalidade.
+2.  Implementação dos requisitos.
+3.  Execução dos testes automatizados.
+4.  Validação dos endpoints.
+5.  Criação de commits.
+6.  Abertura de Pull Request.
+7.  Revisão e integração à branch `main`.
 
----
+------------------------------------------------------------------------
 
 ## 👨‍💻 Desenvolvedores
 
-**Gabriel Cotrim Miron**  
-Engenharia de Software — UTFPR  
+**Gabriel Cotrim Miron**\
+Engenharia de Software --- UTFPR\
 [GitHub](https://github.com/GabrielCotrimMiron)
 
-**Otávio Felício**  
-Engenharia de Software — UTFPR
+**Otávio Felício**\
+Engenharia de Software --- UTFPR
 [GitHub](https://github.com/tatofelicio)
 
----
+------------------------------------------------------------------------
 
 ## 🎓 Contexto Acadêmico
 
-**Instituição:** Universidade Tecnológica Federal do Paraná (UTFPR)  
-**Campus:** Cornélio Procópio  
-**Curso:** Bacharelado em Engenharia de Software  
+**Instituição:** Universidade Tecnológica Federal do Paraná (UTFPR)\
+**Campus:** Cornélio Procópio\
+**Curso:** Bacharelado em Engenharia de Software\
 **Disciplina:** Programação Orientada a Objetos II
 
----
+------------------------------------------------------------------------
 
-**GearFlow — Sistema de Gerenciamento de Oficina Mecânica**
+**GearFlow --- Sistema de Gerenciamento de Oficina Mecânica**
 
 *Projeto acadêmico em desenvolvimento.*
