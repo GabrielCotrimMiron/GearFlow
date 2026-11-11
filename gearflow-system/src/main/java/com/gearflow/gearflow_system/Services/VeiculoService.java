@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -44,29 +45,11 @@ public class VeiculoService {
                     "O ID não deve ser informado no cadastro.");
         }
 
-        String placa = normalizarPlaca(veiculo.getPlaca());
-
-        if (!placa.matches("[A-Z]{3}[0-9][A-Z0-9][0-9]{2}")) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "A placa deve estar no formato brasileiro válido.");
-        }
-
-        if (veiculoRepository.existsByPlacaIgnoreCase(placa)) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Já existe um veículo cadastrado com esta placa.");
-        }
-
-        Integer clienteId = veiculo.getCliente().getId();
-
-        Cliente cliente = clienteRepository.findById(clienteId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Cliente não encontrado."));
+        String placa = validarENormalizarPlaca(veiculo.getPlaca());
+        Cliente cliente = temCliente(veiculo) ? resolverCliente(veiculo.getCliente()) : null;
+        veiculo.setCliente(cliente);
 
         veiculo.setPlaca(placa);
-        veiculo.setCliente(cliente);
 
         try {
             return veiculoRepository.saveAndFlush(veiculo);
@@ -75,6 +58,54 @@ public class VeiculoService {
                     HttpStatus.CONFLICT,
                     "Não foi possível cadastrar o veículo. Verifique se a placa já existe.");
         }
+    }
+
+    private boolean temCliente(Veiculo veiculo) {
+        Cliente c = veiculo.getCliente();
+        return c != null && (
+                c.getId() != null ||
+                        (c.getEmail() != null && !c.getEmail().isBlank())
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<Veiculo> listarVeiculosDoCliente(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Cliente não autenticado.");
+        }
+
+        return veiculoRepository.findByClienteEmailIgnoreCaseOrderByIdDesc(
+                authentication.getName());
+    }
+
+    @Transactional
+    public Veiculo cadastrarVeiculoDoCliente(Veiculo veiculo, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Cliente não autenticado.");
+        }
+
+        if (veiculo == null || veiculo.getPlaca() == null || veiculo.getPlaca().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A placa do veículo é obrigatória.");
+        }
+
+        Cliente cliente = clienteRepository.findByEmailIgnoreCase(authentication.getName())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Cadastro de cliente não encontrado para o usuário logado."));
+
+        String placa = validarENormalizarPlaca(veiculo.getPlaca());
+
+        veiculo.setId(null);
+        veiculo.setPlaca(placa);
+        veiculo.setCliente(cliente);
+
+        return veiculoRepository.saveAndFlush(veiculo);
     }
 
     @Transactional(readOnly = true)
@@ -92,7 +123,6 @@ public class VeiculoService {
 
     @Transactional(readOnly = true)
     public List<HistoricoManutencaoDTO> buscarHistorico(Integer veiculoId) {
-
         buscarPorId(veiculoId);
 
         List<OrdemServico> ordens = ordemServicoRepository
@@ -107,6 +137,51 @@ public class VeiculoService {
         return historico;
     }
 
+    private String validarENormalizarPlaca(String placaBruta) {
+        String placa = normalizarPlaca(placaBruta);
+
+        if (!placa.matches("[A-Z]{3}[0-9][A-Z0-9][0-9]{2}")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A placa deve estar no formato brasileiro válido.");
+        }
+
+        if (veiculoRepository.existsByPlacaIgnoreCase(placa)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Já existe um veículo cadastrado com esta placa.");
+        }
+
+        return placa;
+    }
+
+    @Transactional
+    public Veiculo vincularCliente(Integer id, Cliente informado) {
+        Veiculo v = buscarPorId(id);
+        v.setCliente(resolverCliente(informado));
+        return veiculoRepository.save(v);
+    }
+
+    private Cliente resolverCliente(Cliente clienteInformado) {
+        if (clienteInformado.getId() != null) {
+            return clienteRepository.findById(clienteInformado.getId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Cliente não encontrado pelo ID informado."));
+        }
+
+        if (clienteInformado.getEmail() != null && !clienteInformado.getEmail().isBlank()) {
+            return clienteRepository.findByEmailIgnoreCase(clienteInformado.getEmail().trim())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Cliente não encontrado com o e-mail informado."));
+        }
+
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Informe o ID ou o e-mail do cliente responsável.");
+    }
+
     private void validarDados(Veiculo veiculo) {
         if (veiculo == null) {
             throw new ResponseStatusException(
@@ -114,18 +189,26 @@ public class VeiculoService {
                     "Os dados do veículo são obrigatórios.");
         }
 
-        if (veiculo.getPlaca() == null ||
-                veiculo.getPlaca().isBlank()) {
+        if (veiculo.getPlaca() == null || veiculo.getPlaca().isBlank()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "A placa é obrigatória.");
         }
 
-        if (veiculo.getCliente() == null ||
-                veiculo.getCliente().getId() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "O cliente responsável é obrigatório.");
+        boolean temCliente = veiculo.getCliente() != null &&
+                (veiculo.getCliente().getId() != null ||
+                        (veiculo.getCliente().getEmail() != null && !veiculo.getCliente().getEmail().isBlank()));
+        boolean temNome = veiculo.getNomeProprietario() != null
+                && !veiculo.getNomeProprietario().isBlank();
+
+        if (!temCliente(veiculo) && !temNome) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Informe o cliente (ID ou e-mail) ou o nome do proprietário.");
+        }
+
+        if (!temCliente && !temNome) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Informe o cliente (ID ou e-mail) ou o nome do proprietário.");
         }
     }
 

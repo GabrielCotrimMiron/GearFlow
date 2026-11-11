@@ -39,6 +39,8 @@ public class Veiculo {
 
     private Integer kmAtual;
 
+
+
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnoreProperties({
@@ -49,8 +51,9 @@ public class Veiculo {
         "veiculos"
     })
     @ManyToOne
-    @JoinColumn(name = "cliente_id")
+    @JoinColumn(name = "cliente_id",  nullable =true)
     private Cliente cliente;
+    private String nomeProprietario;
 
     public void atualizarQuilometragem(int novaKm) {
         this.kmAtual = novaKm;
