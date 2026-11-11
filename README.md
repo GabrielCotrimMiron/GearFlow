@@ -199,6 +199,30 @@ http://localhost:8080
 ```
 
 ---
+🖥️ Como Executar o Frontend (React)
+
+Para rodar a interface da aplicação localmente, certifique-se de ter o Node.js instalado em sua máquina.
+
+1. Navegue até a pasta do frontend
+Abra o seu terminal e acesse o diretório (gearflow-frontend) onde o projeto React está localizado (onde fica o arquivo package.json).
+
+2. Instale as dependências
+Na primeira vez que clonar o projeto (ou se novas bibliotecas foram adicionadas), instale os pacotes necessários do Node:
+
+npm install
+
+
+3. Inicie o servidor de desenvolvimento
+Inicie o projeto utilizando o Vite:
+
+npm run dev
+
+
+4. Acesse a aplicação
+O terminal exibirá a URL local. Abra o navegador e acesse:
+👉 http://localhost:5173
+
+⚠️ Importante: Para que o login, as listagens de veículos e os agendamentos funcionem, o servidor Backend (Spring Boot) deve estar em execução simultaneamente, escutando na porta 8080.
 
 ## 🌐 Endpoints da API
 
