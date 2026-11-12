@@ -9,6 +9,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,7 +39,7 @@ public class AuthController {
             // Validação de senha e classificação do perfil centralizadas no serviço
             // existente.
             LoginResponseDTO usuario = authService.autenticar(login);
-            UserDetails details = users.loadUserByUsername(login.getEmail());
+            UserDetails details = users.loadUserByUsername(login.getEmail().trim());
             Authentication authentication = new UsernamePasswordAuthenticationToken(
                     details, null, details.getAuthorities());
             // Renovar o identificador para reduzir o risco de fixação de sessão.
@@ -51,7 +52,7 @@ public class AuthController {
             contextRepository.saveContext(context, request, response);
             request.getSession(true).setAttribute("GEARFLOW_USUARIO", usuario);
             return ResponseEntity.ok(usuario);
-        } catch (RuntimeException ex) {
+        } catch (BadCredentialsException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "E-mail ou senha inválidos."));
         }

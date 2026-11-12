@@ -44,67 +44,55 @@ public class SecurityConfig {
                                 .cors(Customizer.withDefaults())
                                 .csrf(csrf -> csrf.disable())
                                 .authorizeHttpRequests(auth -> auth
+                                                // Acesso publico necessário para entrar e se cadastrar.
+                                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                                .requestMatchers("/error").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/auth/login", "/clientes/registro").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/auth/session",
+                                                                "/agendamentos/horarios-disponiveis").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
 
-                                                // Mantenha aqui todas as regras existentes
-
-                                                // Permitir preflight CORS
-                                                .requestMatchers(HttpMethod.OPTIONS, "/**")
-                                                .permitAll()
-
-                                                // Apenas gerentes podem gerenciar cadastros de clientes
-                                                .requestMatchers("/admin/clientes/**")
+                                                // Cadastros de clientes e equipe sao gerenciados pelo gerente.
+                                                .requestMatchers("/admin/clientes", "/admin/clientes/**")
                                                 .hasRole("GERENTE")
-                                                .requestMatchers(HttpMethod.PUT, "/clientes/*")
-                                                .hasRole("GERENTE")
+                                                .requestMatchers(HttpMethod.PUT, "/clientes/*").hasRole("GERENTE")
+                                                .requestMatchers(HttpMethod.GET, "/funcionarios").hasRole("FUNCIONARIO")
+                                                .requestMatchers("/funcionarios", "/funcionarios/**").hasRole("GERENTE")
 
-                                                // Listagem geral das ordens de servico
-                                                // Acesso restrito aos funcionarios
-                                                .requestMatchers(
-                                                                HttpMethod.GET,
-                                                                "/ordens-servico")
+                                                // Um cliente visualiza e cadastra apenas os próprios veículos.
+                                                .requestMatchers(HttpMethod.GET, "/veiculos/meus").hasRole("USER")
+                                                .requestMatchers(HttpMethod.POST, "/veiculos/meus").hasRole("USER")
+                                                .requestMatchers(HttpMethod.GET, "/veiculos/*/historico").authenticated()
+                                                .requestMatchers("/veiculos", "/veiculos/**").hasRole("FUNCIONARIO")
+
+                                                // Agendamento de cliente, e gerenciamento pela oficina.
+                                                .requestMatchers("/agendamentos/meus").hasRole("USER")
+                                                .requestMatchers("/agendamentos", "/agendamentos/**")
                                                 .hasRole("FUNCIONARIO")
+                                                .requestMatchers("/alertas-preventivos", "/alertas-preventivos/**")
+                                                .hasRole("USER")
 
-                                                // RF05 - Somente funcionarios
-                                                .requestMatchers(
-                                                                HttpMethod.GET,
-                                                                "/ordens-servico/fila-prioridade")
-                                                .hasRole("FUNCIONARIO")
-
-                                                // RF05 - Alteracao de prioridades
-                                                .requestMatchers(
-                                                                HttpMethod.PUT,
-                                                                "/ordens-servico/*/prioridade")
-                                                .hasRole("FUNCIONARIO")
-
-                                                // RF09 - Fechamento de rascunho
-                                                .requestMatchers(
-                                                                HttpMethod.PUT,
-                                                                "/ordens-servico/*/fechar-rascunho")
-                                                .hasRole("FUNCIONARIO")
-
-                                                // RF12 e RF13 - Cliente autenticado
-                                                .requestMatchers(
-                                                                HttpMethod.GET,
-                                                                "/ordens-servico/minhas",
+                                                // Consultas e aprovacao de orcamentos pelo cliente.
+                                                .requestMatchers(HttpMethod.GET, "/ordens-servico/minhas",
                                                                 "/ordens-servico/*/acompanhamento",
                                                                 "/ordens-servico/*/orcamento")
-                                                .authenticated()
-
-                                                // RF14 - Aprovacao ou rejeicao de orcamento
-                                                // Somente clientes autenticados
-                                                .requestMatchers(
-                                                                HttpMethod.PUT,
+                                                .hasRole("USER")
+                                                .requestMatchers(HttpMethod.PUT,
                                                                 "/ordens-servico/*/aprovar",
                                                                 "/ordens-servico/*/rejeitar")
                                                 .hasRole("USER")
+                                                // Inspecao: leitura para dono da OS ou funcionario;
+                                                // escrita somente para funcionario (ver Inspecao3DService).
+                                                .requestMatchers("/ordens-servico/*/inspecao3d",
+                                                                "/ordens-servico/*/inspecao3d/**")
+                                                .authenticated()
 
-                                                // RF04 - Dashboard Financeira
-                                                // Acesso restrito aos funcionarios autenticados
-                                                .requestMatchers(
-                                                                "/financeiro/**")
+                                                // Rotinas operacionais internas.
+                                                .requestMatchers("/ordens-servico", "/ordens-servico/**",
+                                                                "/pecas", "/pecas/**", "/servicos", "/servicos/**",
+                                                                "/financeiro", "/financeiro/**")
                                                 .hasRole("FUNCIONARIO")
-
-                                                .anyRequest().permitAll())
+                                                .anyRequest().denyAll())
                                 .httpBasic(Customizer.withDefaults())
                                 .build();
         }
@@ -129,7 +117,9 @@ public class SecurityConfig {
                 config.setAllowedHeaders(List.of(
                                 "Authorization",
                                 "Content-Type",
-                                "Accept"));
+                                "Accept",
+                                "X-Client",
+                                "X-XSRF-TOKEN"));
                 config.setAllowCredentials(true);
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
@@ -143,7 +133,7 @@ public class SecurityConfig {
                         UsuarioRepository usuarios) {
 
                 return email -> {
-                        var usuario = usuarios.findByEmail(email)
+                        var usuario = usuarios.findByEmailIgnoreCase(email)
                                         .orElseThrow(() -> new UsernameNotFoundException(
                                                         "Usuario nao encontrado"));
 

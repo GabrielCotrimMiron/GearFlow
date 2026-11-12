@@ -26,7 +26,4 @@ public class Cliente extends Usuario {
         v.setCliente(this);
     }
 
-    public void aprovarOrcamento(OrdemServico os) {
-        // Lógica de negócio futura para aprovação
-    }
 }

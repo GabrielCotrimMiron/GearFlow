@@ -6,13 +6,13 @@ import com.gearflow.gearflow_system.Repositories.FuncionarioRepository;
 import com.gearflow.gearflow_system.Services.FuncionarioService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/funcionarios")
-@CrossOrigin(origins = "http://localhost:5173")
 public class FuncionarioController {
 
     private final FuncionarioService funcionarioService;
@@ -21,6 +21,12 @@ public class FuncionarioController {
     public FuncionarioController(FuncionarioService funcionarioService, FuncionarioRepository funcionarioRepository) {
         this.funcionarioService = funcionarioService;
         this.funcionarioRepository = funcionarioRepository;
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public String emailDuplicadoOuVinculo() {
+        return "Cadastro duplicado ou funcionário associado a outros registros.";
     }
 
     @PostMapping
@@ -38,10 +44,13 @@ public class FuncionarioController {
                     funcionarioExistente.setEmail(dadosAtualizados.getEmail());
                     funcionarioExistente.setCpf(dadosAtualizados.getCpf());
                     funcionarioExistente.setMatricula(dadosAtualizados.getMatricula());
-                    funcionarioExistente.setNivelAcesso(dadosAtualizados.getNivelAcesso());
-
-                    // Dica: Geralmente não atualizamos a senha na mesma rota de edição básica,
-                    // a não ser que venha preenchida. Se quiser atualizar a senha, inclua a lógica aqui.
+                    if (dadosAtualizados.getNivelAcesso() != null) {
+                        funcionarioExistente.setNivelAcesso(dadosAtualizados.getNivelAcesso());
+                    }
+                    // A senha só muda quando preenchida no formulário.
+                    if (dadosAtualizados.getSenha() != null && !dadosAtualizados.getSenha().isBlank()) {
+                        funcionarioExistente.setSenha(dadosAtualizados.getSenha());
+                    }
 
                     Funcionario funcionarioSalvo = funcionarioRepository.save(funcionarioExistente);
                     return ResponseEntity.ok(funcionarioSalvo);

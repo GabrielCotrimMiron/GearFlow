@@ -8,8 +8,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -56,10 +54,10 @@ public class Veiculo {
     private String nomeProprietario;
 
     public void atualizarQuilometragem(int novaKm) {
+        if (novaKm < 0 || (kmAtual != null && novaKm < kmAtual)) {
+            throw new IllegalArgumentException("A quilometragem não pode ser negativa ou diminuir.");
+        }
         this.kmAtual = novaKm;
     }
 
-    public List<OrdemServico> obterHistoricoManutencoes() {
-        return new ArrayList<>();
-    }
 }
