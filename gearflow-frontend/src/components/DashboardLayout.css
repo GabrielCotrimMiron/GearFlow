@@ -526,3 +526,8 @@
 .gf-sidebar .gf-nav-link.active{background:rgba(107,210,190,.17);border-color:rgba(107,210,190,.23);box-shadow:inset 3px 0 #89dbc8}
 .gf-content{background:#f6f9f9}.gf-topbar{border-color:#e6eded}.gf-page-header h1{letter-spacing:-1px}
 .gf-auth-loading{min-height:100vh;display:grid;place-content:center;gap:12px;text-align:center;color:#245460;background:#f6f9f9;font-weight:650}
+
+/* Mantém os links do menu alinhados mesmo com o agrupamento do React. */
+.gf-nav-group {
+  display: contents;
+}

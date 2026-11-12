@@ -9,7 +9,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/pecas")
-@CrossOrigin(origins = "*")
 public class PecaController {
     private final PecaRepository pecaRepository;
 

@@ -39,12 +39,13 @@ public abstract class ItemOS {
     @JsonIgnore
     private OrdemServico ordemServico;
 
-    public double calcularSubtotal() {
-        if (valorUni != null && qtd != null) {
-            return valorUni.doubleValue() * qtd;
-        }
+    public BigDecimal calcularSubtotalPreciso() {
+        if (valorUni == null || qtd == null) return BigDecimal.ZERO;
+        return valorUni.multiply(BigDecimal.valueOf(qtd));
+    }
 
-        return 0.0;
+    public double calcularSubtotal() {
+        return calcularSubtotalPreciso().doubleValue();
     }
 
     protected void verificarAlteracao() {

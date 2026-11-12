@@ -20,11 +20,14 @@ public class Servico extends ItemOS {
 
     public void aplicarDesconto(double porcentagem) {
         verificarAlteracao();
-        if (porcentagem > 0 && porcentagem <= 100 && this.getValorUni() != null) {
-            BigDecimal fatorDesconto = BigDecimal.valueOf(1.0 - (porcentagem / 100.0));
-            BigDecimal novoValor = this.getValorUni().multiply(fatorDesconto).setScale(2, RoundingMode.HALF_UP);
-            this.setValorUni(novoValor);
+        if (!Double.isFinite(porcentagem) || porcentagem < 0 || porcentagem > 100) {
+            throw new IllegalArgumentException("O desconto deve estar entre 0 e 100%.");
         }
+        if (this.getValorUni() == null) {
+            throw new IllegalArgumentException("O serviço precisa ter preço definido.");
+        }
+        BigDecimal fator = BigDecimal.ONE.subtract(BigDecimal.valueOf(porcentagem).movePointLeft(2));
+        this.setValorUni(this.getValorUni().multiply(fator).setScale(2, RoundingMode.HALF_UP));
     }
 
     public void setTempoEstim(Integer tempoEstim) {

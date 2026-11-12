@@ -23,6 +23,7 @@ import org.hibernate.Hibernate;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Comparator;
 
 @Service
 public class OrdemServicoService {
@@ -112,10 +113,11 @@ public class OrdemServicoService {
                                                 HttpStatus.NOT_FOUND,
                                                 "Ordem de servico nao encontrada"));
 
-                if (ordem.getStatusOperac() == StatusOperacional.FINALIZADA) {
-                        throw new ResponseStatusException(
-                                        HttpStatus.CONFLICT,
-                                        "Nao e permitido alterar a prioridade de uma OS finalizada");
+                if (ordem.getStatusOperac() == StatusOperacional.FINALIZADA
+                                || ordem.getStatusOperac() == StatusOperacional.AGUARDANDO_APROVACAO
+                                || ordem.getStatusOperac() == StatusOperacional.ORCAMENTO_REJEITADO) {
+                        throw new ResponseStatusException(HttpStatus.CONFLICT,
+                                        "Nao e permitido alterar a prioridade neste status da OS");
                 }
 
                 ordem.setPrioridade(prioridade);
@@ -124,6 +126,9 @@ public class OrdemServicoService {
 
         @Transactional
         public void adicionarItem(Integer osId, Integer itemId, Integer quantidade) {
+                if (itemId == null) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe o item do catalogo.");
+                }
                 if (quantidade == null || quantidade <= 0) {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                                         "A quantidade deve ser maior que zero.");
@@ -132,6 +137,13 @@ public class OrdemServicoService {
                 OrdemServico ordem = ordemServicoRepository.findById(osId)
                                 .orElseThrow(() -> new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND, "Ordem de serviço não encontrada"));
+
+                if (ordem.getStatusOperac() == StatusOperacional.FINALIZADA
+                                || ordem.getStatusOperac() == StatusOperacional.AGUARDANDO_APROVACAO
+                                || ordem.getStatusOperac() == StatusOperacional.ORCAMENTO_REJEITADO) {
+                        throw new ResponseStatusException(HttpStatus.CONFLICT,
+                                        "Não é possível adicionar itens neste status da OS.");
+                }
 
                 ItemOS itemProxy = itemOSRepository.findById(itemId)
                                 .orElseThrow(() -> new ResponseStatusException(
@@ -327,6 +339,22 @@ public class OrdemServicoService {
                 ordemServicoRepository.save(ordem);
         }
 
+        // RF05 - Fila em ordem de prioridade e data (sem JPQL complexo).
+        @Transactional(readOnly = true)
+        public List<OrdemServicoGestaoDTO> listarFilaPrioridade() {
+                return ordemServicoRepository.findAll().stream()
+                                .sorted(Comparator
+                                                .comparingInt((OrdemServico os) ->
+                                                                os.getPrioridade() == PrioridadeOS.URGENTE ? 0
+                                                                        : os.getPrioridade() == PrioridadeOS.ALTA ? 1 : 2)
+                                                .thenComparing(OrdemServico::getDataEntrada,
+                                                                Comparator.nullsLast(Comparator.naturalOrder()))
+                                                .thenComparing(OrdemServico::getId,
+                                                                Comparator.nullsLast(Comparator.naturalOrder())))
+                                .map(OrdemServicoGestaoDTO::new)
+                                .toList();
+        }
+
         // Listar ordens para a tela de gestao
         @Transactional(readOnly = true)
         public List<OrdemServicoGestaoDTO> listarTodas() {
@@ -335,6 +363,20 @@ public class OrdemServicoService {
                                 .stream()
                                 .map(OrdemServicoGestaoDTO::new)
                                 .toList();
+        }
+
+        // Finalizacao: fecha uma OS que ja teve o orcamento aprovado.
+        @Transactional
+        public void finalizarOrdem(Integer id) {
+                OrdemServico ordem = ordemServicoRepository.findById(id)
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND, "Ordem de servico nao encontrada"));
+                if (ordem.getStatusOperac() != StatusOperacional.EM_EXECUCAO) {
+                        throw new ResponseStatusException(HttpStatus.CONFLICT,
+                                        "A OS precisa estar em execucao para ser finalizada.");
+                }
+                ordem.finalizar();
+                ordemServicoRepository.save(ordem);
         }
 
         // RF14 - Aprovar orçamento

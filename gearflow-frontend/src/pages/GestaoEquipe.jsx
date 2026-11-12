@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useOutletContext } from "react-router-dom";
 import api from "../services/api";
 import "./GestaoEquipe.css";
 
@@ -35,6 +36,8 @@ function obterIniciais(nome) {
 }
 
 export default function Equipe() {
+  const usuario = useOutletContext();
+  const podeGerenciar = usuario?.user === "GERENTE";
   const [equipe, setEquipe] = useState([]);
   const [termoBusca, setTermoBusca] = useState("");
   const [filtroCargo, setFiltroCargo] = useState("TODOS");
@@ -280,13 +283,11 @@ export default function Equipe() {
           <option value="GERENTE">Gerentes</option>
         </select>
 
-        <button
-          type="button"
-          className="equipe-pagina-btn equipe-pagina-btn-primary"
-          onClick={abrirModalNovo}
-        >
-          ＋ Adicionar funcionário
-        </button>
+        {podeGerenciar && (
+          <button type="button" className="equipe-pagina-btn equipe-pagina-btn-primary" onClick={abrirModalNovo}>
+            ＋ Adicionar funcionário
+          </button>
+        )}
       </div>
 
       {carregando ? (
@@ -347,21 +348,14 @@ export default function Equipe() {
                   Detalhes
                 </button>
 
-                <button
-                  type="button"
-                  className="equipe-pagina-btn equipe-pagina-btn-outline"
-                  onClick={() => abrirModalEdicao(funcionario)}
-                >
-                  Editar
-                </button>
-
-                <button
-                  type="button"
-                  className="equipe-pagina-btn equipe-pagina-btn-danger"
-                  onClick={() => handleExcluir(funcionario.id)}
-                >
-                  Excluir
-                </button>
+                {podeGerenciar && (
+                  <>
+                    <button type="button" className="equipe-pagina-btn equipe-pagina-btn-outline"
+                      onClick={() => abrirModalEdicao(funcionario)}>Editar</button>
+                    <button type="button" className="equipe-pagina-btn equipe-pagina-btn-danger"
+                      onClick={() => handleExcluir(funcionario.id)}>Excluir</button>
+                  </>
+                )}
               </div>
             </article>
           ))}
@@ -442,17 +436,16 @@ export default function Equipe() {
                   Fechar
                 </button>
 
-                <button
-                  type="button"
-                  className="equipe-pagina-btn equipe-pagina-btn-primary"
-                  onClick={() => {
-                    const funcionario = funcionarioDetalhe;
-                    setFuncionarioDetalhe(null);
-                    abrirModalEdicao(funcionario);
-                  }}
-                >
-                  Editar funcionário
-                </button>
+                {podeGerenciar && (
+                  <button type="button" className="equipe-pagina-btn equipe-pagina-btn-primary"
+                    onClick={() => {
+                      const funcionario = funcionarioDetalhe;
+                      setFuncionarioDetalhe(null);
+                      abrirModalEdicao(funcionario);
+                    }}>
+                    Editar funcionário
+                  </button>
+                )}
               </div>
             </div>
           </div>,

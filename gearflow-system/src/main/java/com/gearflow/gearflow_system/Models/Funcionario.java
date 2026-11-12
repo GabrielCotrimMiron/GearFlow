@@ -18,7 +18,4 @@ public class Funcionario extends Usuario {
     @Enumerated(EnumType.STRING)
     private NivelAcesso nivelAcesso;
 
-    public boolean verificarPermissao(String acao) {
-        return true;
-    }
 }

@@ -3,13 +3,14 @@ package com.gearflow.gearflow_system.Controllers;
 import com.gearflow.gearflow_system.Models.Servico;
 import com.gearflow.gearflow_system.Repositories.ServicoRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/servicos")
-@CrossOrigin(origins = "*")
 public class ServicoController {
 
     private final ServicoRepository servicoRepository;
@@ -55,7 +56,11 @@ public class ServicoController {
 
         return servicoRepository.findById(id)
                 .map(servico -> {
-                    servico.aplicarDesconto(porcentagem);
+                    try {
+                        servico.aplicarDesconto(porcentagem);
+                    } catch (IllegalArgumentException ex) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+                    }
                     return ResponseEntity.ok(servicoRepository.save(servico));
                 })
                 .orElse(ResponseEntity.notFound().build());
