@@ -1,121 +1,61 @@
 # 🔧 GearFlow
 
-**Sistema de Gerenciamento de Oficina Mecânica**
+**Sistema Web de Gerenciamento de Oficina Mecânica**
 
-Projeto acadêmico desenvolvido para a disciplina de **Programação
-Orientada a Objetos II (POO II)**, do curso de Engenharia de Software da
-**Universidade Tecnológica Federal do Paraná (UTFPR) --- Campus Cornélio
-Procópio**.
+Projeto acadêmico desenvolvido por **Gabriel Cotrim Miron** e **Otávio Felício**, na disciplina de **Programação Orientada a Objetos II (POO II)**, do Bacharelado em Engenharia de Software da **UTFPR — Campus Cornélio Procópio**.
 
-> 🚧 **Status:** Em desenvolvimento. As funcionalidades recentes estão
-> em fase de integração e validação. O projeto é acadêmico e não está
-> preparado para produção.
+> **Status (12/11/2026):** implementação acadêmica em revisão final. O código inclui frontend, backend, persistência e regras de negócio. Ainda é necessária a validação integrada após a atualização antes de apresentá-lo como uma versão estável.
 
-------------------------------------------------------------------------
+## Sobre o projeto
 
-## 📖 Sobre o Projeto
+O GearFlow organiza atividades de uma oficina mecânica e oferece áreas separadas para **gerente**, **funcionário/mecânico** e **cliente**. O cliente acompanha serviços e orçamentos; a oficina mantém veículos, equipe, estoque, agendamentos e ordens de serviço.
 
-O **GearFlow** é um sistema voltado ao gerenciamento de oficinas
-mecânicas, com o objetivo de centralizar informações e facilitar a
-organização dos processos internos.
+### Tecnologias
 
-A proposta contempla o gerenciamento de clientes, veículos,
-funcionários, peças, serviços e ordens de serviço, proporcionando maior
-controle sobre os atendimentos realizados.
+| Camada | Tecnologias |
+| --- | --- |
+| Backend | **Java 25**, **Spring Boot 4.1.1**, Spring MVC, Spring Data JPA, Hibernate, Spring Security |
+| Banco | MySQL |
+| Frontend | React 19, Vite 8, React Router, CSS, Axios |
+| Visualização 3D | Three.js, React Three Fiber, Drei |
+| Build/testes | Maven Wrapper, npm, JUnit 5, Mockito |
+| Colaboração | Git e GitHub |
 
-O desenvolvimento utiliza conceitos de **Programação Orientada a
-Objetos**, arquitetura em camadas, persistência de dados e
-desenvolvimento de APIs REST.
+As versões exatas das dependências estão em `gearflow-system/pom.xml` e `gearflow-frontend/package.json`.
 
-## 🎯 Objetivos
+## Funcionalidades
 
--   Organizar o gerenciamento de uma oficina mecânica.
--   Centralizar informações de clientes e veículos.
--   Facilitar o controle de ordens de serviço.
--   Permitir o acompanhamento dos serviços pelos clientes.
--   Aplicar conceitos de orientação a objetos e persistência de dados.
--   Desenvolver uma aplicação modular e de fácil manutenção.
+| Módulo | Recursos principais |
+| --- | --- |
+| Autenticação | Login local com sessão HTTP, cadastro de clientes e logout |
+| Gestão de clientes | Listar, pesquisar, cadastrar, editar e excluir, com acesso restrito ao gerente |
+| Equipe | Cadastro, edição, consulta e exclusão de funcionários |
+| Veículos | Cadastro, vínculo com cliente e histórico de manutenção |
+| Peças e serviços | Catálogos, estoque e preços |
+| Ordens de serviço | Abertura, itens, diagnóstico, status, prioridades e fechamento |
+| RF05 | Fila de OS ordenada por prioridade (urgente, alta, normal) |
+| RF09 | Fechamento do orçamento em rascunho |
+| RF12/RF13 | Acompanhamento da OS e consulta de orçamento pelo cliente |
+| RF14 | Aprovação ou rejeição de orçamento |
+| RF15 | Bloqueio de alterações em OS finalizada |
+| RF21 | Alertas de manutenção preventiva por quilometragem |
+| Agendamentos | Solicitação, horários disponíveis, aprovação e cancelamento |
+| Inspeção 3D | Diagnóstico visual e apontamentos associados à OS |
+| Dashboards | Área do cliente, painel gerencial e financeiro |
 
-------------------------------------------------------------------------
+**Fluxo geral da OS:** `EM_ANALISE` → `AGUARDANDO_APROVACAO` → `EM_EXECUCAO` (se o cliente aprovar) → `FINALIZADA`. Se rejeitada, passa para `ORCAMENTO_REJEITADO`. Ao finalizar, o pagamento fica `PENDENTE` para posterior registro pela oficina.
 
-## 🛠️ Tecnologias Utilizadas
+> Os módulos estão implementados no código; a revisão funcional depende de executar os cenários de teste com MySQL e perfis reais. Não presuma que todos os fluxos foram validados apenas porque o build passou.
 
-  -----------------------------------------------------------------------
-  Tecnologia                          Finalidade
-  ----------------------------------- -----------------------------------
-  Java 25 e Spring Boot 4.1.1         Backend (versões informadas no
-                                      README anterior; confirmar em
-                                      `pom.xml`)
+## Estrutura do projeto
 
-  Spring Web MVC, Spring Data JPA e   API REST e persistência
-  Hibernate
-
-  Spring Security                     Autenticação e autorização
-
-  MySQL                               Banco de dados
-
-  React, Vite e React Router          Interface web e navegação
-
-  CSS e Lucide React                  Estilização e ícones
-
-  Three.js, React Three Fiber e Drei  Inspeção 3D
-
-  Maven Wrapper e npm                 Dependências e execução
-
-  Lombok, JUnit 5 e Mockito           Apoio ao desenvolvimento e testes
-
-  Postman, Git e GitHub               Testes manuais e colaboração
-  -----------------------------------------------------------------------
-
-------------------------------------------------------------------------
-
-## 📋 Funcionalidades
-
-O projeto reúne módulos para três perfis: **cliente**, **funcionário** e
-**gerente**.
-
-### Gestão administrativa e operacional
-
--   Gestão de clientes: pesquisa, cadastro, edição e exclusão, com
-    autorização de gerente.
--   Gestão de equipe, veículos, peças, estoque e catálogo de serviços.
--   Gestão de ordens de serviço e **RF05 --- Fila de prioridade**.
--   **RF09 --- Fechamento de rascunho**.
--   Dashboard geral e financeiro, com indicadores e atalhos de
-    navegação.
--   Gestão de agendamentos.
-
-### Portal do cliente
-
--   Login, cadastro e recuperação da sessão autenticada.
--   Dashboard com veículos, ordens de serviço e agendamentos.
--   **RF12 --- Acompanhamento de OS** e **RF13 --- Visualização de
-    orçamento**.
--   **RF14 --- Aprovação ou rejeição de orçamento**.
--   **RF21 --- Alertas de manutenção preventiva**.
--   Inspeção 3D e informações de diagnóstico vinculadas ao atendimento.
-
-### Regras e qualidade
-
--   **RF15 --- Imutabilidade de OS finalizada**.
--   Regras de permissão conforme o perfil do usuário.
-
-> As telas e implementações recentes foram desenvolvidas, mas ainda
-> precisam de validação integrada de todos os fluxos e perfis antes de
-> serem consideradas uma versão estável.
-
-------------------------------------------------------------------------
-
-## 🏗️ Estrutura do Projeto
-
-``` text
+```text
 GearFlow/
 ├── README.md
 ├── gearflow-frontend/
 │   ├── package.json
 │   ├── package-lock.json
 │   ├── vite.config.js
-│   ├── public/
 │   └── src/
 │       ├── components/
 │       ├── pages/
@@ -127,302 +67,181 @@ GearFlow/
     ├── mvnw
     ├── mvnw.cmd
     └── src/
-        ├── main/
-        │   ├── java/com/gearflow/gearflow_system/
-        │   │   ├── Configs/
-        │   │   ├── Controllers/
-        │   │   ├── DTOs/
-        │   │   ├── Models/
-        │   │   ├── Repositories/
-        │   │   └── Services/
-        │   └── resources/application.yml
+        ├── main/java/com/gearflow/gearflow_system/
+        │   ├── Configs/
+        │   ├── Controllers/
+        │   ├── DTOs/
+        │   ├── Models/
+        │   ├── Repositories/
+        │   └── Services/
+        ├── main/resources/application.yml
         └── test/
 ```
 
-### Organização das Camadas
+### Organização do backend
 
--   **Model:** entidades e regras de negócio.
--   **Repository:** comunicação com o banco de dados.
--   **Service:** processamento e validação das regras de negócio.
--   **Controller:** recebimento e tratamento das requisições HTTP.
--   **DTO:** transferência de dados entre a aplicação e seus
-    consumidores.
--   **Config:** configurações da aplicação, incluindo segurança.
+- **Models:** entidades JPA e regras básicas de negócio.
+- **Repositories:** consultas ao banco com Spring Data JPA.
+- **Services:** regras e validações usadas pelas funcionalidades.
+- **Controllers:** endpoints HTTP chamados pelo frontend.
+- **DTOs:** objetos de entrada e saída da API.
+- **Configs:** configuração de segurança e dados de demonstração.
 
-------------------------------------------------------------------------
-
-## 🚀 Como Executar o Projeto
+## Como executar localmente
 
 ### Pré-requisitos
 
--   Git, MySQL e JDK compatível com `gearflow-system/pom.xml` (o README
-    anterior indicava Java 25).
--   Node.js e npm compatíveis com `gearflow-frontend/package.json`.
--   IDE de preferência.
+- JDK **25**, compatível com o `pom.xml`.
+- MySQL iniciado localmente.
+- Node.js e npm compatíveis com o Vite 8.
+- Git e uma IDE (VS Code/IntelliJ/Eclipse).
 
-O Maven Wrapper já está incluído no repositório.
+### 1. Clonar
 
-### 1. Clonar o repositório
-
-``` bash
+```bash
 git clone https://github.com/GabrielCotrimMiron/GearFlow.git
 cd GearFlow
 ```
 
-### 2. Configurar o banco
+### 2. Criar o banco
 
-No MySQL:
+Execute no MySQL:
 
-``` sql
+```sql
 CREATE DATABASE IF NOT EXISTS gearflow;
 ```
 
-Verifique `gearflow-system/src/main/resources/application.yml`. Exemplo
-da configuração usada no desenvolvimento:
-
-``` yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/gearflow
-    username: root
-    password: ${DB_PASSWORD}
-```
-
-Defina a variável `DB_PASSWORD` no terminal em que iniciará o backend:
-
-Git Bash:
-
-``` bash
-export DB_PASSWORD='SUA_SENHA_LOCAL'
-```
-
-PowerShell:
-
-``` powershell
-$env:DB_PASSWORD = 'SUA_SENHA_LOCAL'
-```
-
-**Nunca publique senhas reais no GitHub.** O banco e seus registros não
-são transferidos pelo Git.
+A configuração de desenvolvimento usa `jdbc:mysql://localhost:3306/gearflow`, usuário `root` e senha recebida pela variável `DB_PASSWORD`. Ajuste localmente se o seu MySQL for diferente.
 
 ### 3. Executar o backend
 
-No Git Bash:
+**Git Bash, na raiz do GearFlow:**
 
-``` bash
+```bash
 cd gearflow-system
+export DB_PASSWORD='SENHA_DO_SEU_MYSQL'
 ./mvnw spring-boot:run
 ```
 
-No PowerShell, dentro de `gearflow-system`:
+**PowerShell (alternativa):**
 
-``` powershell
+```powershell
+cd gearflow-system
+$env:DB_PASSWORD = 'SENHA_DO_SEU_MYSQL'
 .\mvnw.cmd spring-boot:run
 ```
 
-API esperada: `http://localhost:8080`.
+API esperada: **http://localhost:8080**. O MySQL precisa estar ativo.
 
 ### 4. Executar o frontend
 
-Em outro terminal, a partir da raiz `GearFlow`:
+Em **outro terminal**, a partir da pasta `GearFlow`:
 
-``` bash
+```bash
 cd gearflow-frontend
 npm install
 npm run dev
 ```
 
-Abra o endereço informado pelo Vite (normalmente
-`http://localhost:5173`).
+Abra o endereço mostrado pelo Vite, geralmente **http://localhost:5173**. O frontend utiliza o proxy `/api` para encaminhar as chamadas ao backend local.
 
-Se a comunicação com a API falhar, confira o backend, `vite.config.js` e
-`src/services/api.js`.
+### 5. Conta inicial de demonstração (somente para banco novo)
 
-### 5. Acesso e contas de teste
+A revisão **não cria mais uma conta de gerente com senha fixa publicada no código**. Se for necessário criar a conta de teste `admin@gearflow.com` em um banco sem gerente, defina **antes de iniciar o backend**:
 
-Utilize usuários existentes no MySQL local ou cadastre um cliente pelo
-sistema. Não há logins e senhas universais documentados. As permissões
-devem ser verificadas com contas de **cliente**, **funcionário** e
-**gerente**.
+```bash
+export GEARFLOW_DEMO_ADMIN_PASSWORD='ESCOLHA_UMA_SENHA_DE_TESTE'
+```
 
-------------------------------------------------------------------------
+Em PowerShell:
 
-## 🌐 Endpoints da API
+```powershell
+$env:GEARFLOW_DEMO_ADMIN_PASSWORD = 'ESCOLHA_UMA_SENHA_DE_TESTE'
+```
 
-  Método   Endpoint                                Finalidade
-  -------- --------------------------------------- -------------------------------------
-  POST     `/auth/login`                           Login
-  GET      `/auth/session`                         Consultar sessão
-  POST     `/auth/logout`                          Encerrar sessão
-  GET      `/admin/clientes`                       Listagem administrativa de clientes
-  GET      `/ordens-servico/minhas`                OS do cliente autenticado
-  GET      `/ordens-servico/{id}/acompanhamento`   Acompanhamento
-  GET      `/ordens-servico/{id}/orcamento`        Orçamento
-  GET      `/ordens-servico/fila-prioridade`       Fila de prioridade
-  PUT      `/ordens-servico/{id}/prioridade`       Alterar prioridade
+O administrador é criado apenas se a variável estiver definida **e** o e-mail ainda não existir. Contas existentes não são alteradas. Guarde a senha fora do repositório. **Os usuários e registros do MySQL não são transferidos pelo `git pull`**.
 
-A tabela resume algumas rotas; os contratos completos estão nos
-Controllers e DTOs.
+## Login e permissões
 
-------------------------------------------------------------------------
+O sistema utiliza a autenticação do Spring Security com **sessão HTTP**. Após o login, o navegador mantém o cookie da sessão e o frontend consulta `GET /auth/session` para restaurar o usuário após atualizar a página. O e-mail, o nome e o perfil são retornados sem informar a senha.
 
-## 🧪 Testes Automatizados
+| Perfil | Permissões previstas |
+| --- | --- |
+| Cliente (`USER`) | Próprios veículos, OS, orçamentos, agendamentos, alertas e inspeções permitidas |
+| Mecânico (`FUNCIONARIO`) | Operações de oficina, estoque, serviços, ordens e financeiro |
+| Gerente (`FUNCIONARIO` + `GERENTE`) | Operações internas **e** administração de clientes/equipe |
 
-O projeto utiliza **JUnit 5** e **Mockito** para validar regras de
-negócio.
+As permissões são verificadas no backend. O frontend também protege as rotas internas, mas isso **não substitui** a proteção da API.
 
-Para executar os testes do backend, a partir da pasta `gearflow-system`:
+## Exemplos de endpoints
 
-``` bash
+| Método | Rota | Operação |
+| --- | --- | --- |
+| `POST` | `/auth/login` | Entrar |
+| `GET` | `/auth/session` | Consultar sessão |
+| `POST` | `/auth/logout` | Encerrar sessão |
+| `POST` | `/clientes/registro` | Cadastrar cliente |
+| `GET` | `/admin/clientes` | Gestão de clientes (gerente) |
+| `GET` | `/veiculos/meus` | Veículos do cliente |
+| `GET` | `/veiculos/{id}/historico` | Histórico autorizado |
+| `GET` | `/ordens-servico/minhas` | Ordens do cliente |
+| `GET` | `/ordens-servico/{id}/orcamento` | Consultar orçamento |
+| `PUT` | `/ordens-servico/{id}/aprovar` | Aprovar orçamento |
+| `PUT` | `/ordens-servico/{id}/rejeitar` | Rejeitar orçamento |
+| `GET` | `/ordens-servico/fila-prioridade` | RF05: fila priorizada |
+| `PUT` | `/ordens-servico/{id}/finalizar` | Finalizar OS em execução |
+| `GET` | `/alertas-preventivos/meus` | Alertas do cliente |
+
+Consulte os Controllers e DTOs para métodos e formatos restantes.
+
+## Testes e checklist de entrega
+
+**Backend** (pasta `gearflow-system`):
+
+```bash
 ./mvnw test
 ```
 
-No PowerShell do Windows, utilize `.\\mvnw.cmd test` (sem os espaços
-externos).
+**Frontend** (pasta `gearflow-frontend`):
 
-> Os testes de inicialização da aplicação dependem da disponibilidade do
-> MySQL e da configuração correta da variável `DB_PASSWORD`.
-
-### Cenários documentados anteriormente
-
-**RF12 --- Acompanhamento da OS**
-
--   Consulta de ordem pertencente ao cliente autenticado.
--   Bloqueio de acesso a ordens de outros clientes.
--   Tratamento de ordens de serviço inexistentes.
-
-**RF15 --- Imutabilidade da OS**
-
--   Bloqueio de alterações após finalização.
--   Bloqueio da adição de itens em ordens finalizadas.
--   Permissão de alterações em ordens em execução.
--   Bloqueio de alterações no preço de itens após finalização.
-
-### Build do frontend
-
-Na pasta `gearflow-frontend`:
-
-``` bash
+```bash
 npm run build
 ```
 
-Além do build, teste o login e logout, permissões, CRUD de clientes,
-orçamento, agendamentos, alertas preventivos e inspeção 3D.
+Antes de entregar, teste manualmente pelo menos:
 
-### Validação pelo Postman
+1. Entrar, atualizar a página e sair em cada perfil.
+2. Cadastro de cliente e funcionário, incluindo senha e CPF.
+3. Restrição de `/admin/clientes` para usuário que não é gerente.
+4. Bloqueio de histórico de veículo de outra conta.
+5. Agendamento, aprovação e vínculo com OS.
+6. Inclusão de peça, desconto, aprovação/rejeição, finalização e pagamento.
+7. Ordem urgente acima da normal, alertas preventivos e Inspeção 3D.
 
-Durante o desenvolvimento, também foram realizados testes manuais dos
-endpoints.
+Uma classe adicional de testes (`RevisaoFinalTest.java`) verifica regressões encontradas na revisão. **Os testes precisam ser executados em ambiente com Java 25 e dependências Maven disponíveis.**
 
-  -----------------------------------------------------------------------
-  Funcionalidade          Cenário                 Resultado
-  ----------------------- ----------------------- -----------------------
-  RF12                    Cliente consulta sua    200 OK
-                          própria OS
+## Segurança e limites do projeto acadêmico
 
-  RF12                    Consulta sem            401 Unauthorized
-                          autenticação
+O GearFlow é **um protótipo local, não adequado para produção**. Apesar dos controles de acesso revisados, ainda usa `NoOpPasswordEncoder` (senhas sem hash), CSRF desabilitado e não possui infraestrutura de hospedagem com HTTPS, monitoramento ou migrações de banco versionadas.
 
-  RF12                    Consulta de OS de outro 403 Forbidden
-                          cliente
+Antes de publicar na internet, será necessário migrar senhas com cuidado, habilitar uma proteção CSRF compatível com sessões, revisar validações e tratar dados pessoais com segurança. **Não use dados pessoais reais na demonstração.**
 
-  RF12                    Consulta de OS          404 Not Found
-                          inexistente
+## Versionamento e colaboração
 
-  RF01                    Login administrativo    200 OK
-                          válido
+As alterações devem ser feitas em branches e integradas via Pull Request. Após o merge na `main`, o outro desenvolvedor executa:
 
-  RF01                    Cliente tenta realizar  401 Unauthorized
-                          login administrativo
-  -----------------------------------------------------------------------
-
-Os cenários acima foram registrados no README anterior; execute os
-testes novamente na branch atual antes de declarar a integração
-validada.
-
-------------------------------------------------------------------------
-
-## 🔐 Segurança
-
-O GearFlow utiliza Spring Security e autenticação por sessão HTTP, além
-de verificações de autorização em rotas específicas.
-
-**Limitações conhecidas no ambiente de desenvolvimento:** - Uso
-temporário de `NoOpPasswordEncoder` e senhas sem hash. - Regras
-permissivas para rotas não explicitamente protegidas. - Proteção CSRF
-desabilitada apesar do uso de sessão por cookie. - Necessidade de
-revisão completa de permissões, validação e tratamento de dados
-pessoais.
-
-**Esta aplicação acadêmica não está pronta para produção.** Antes de uma
-implantação real, é necessário usar hash seguro de senhas, proteção CSRF
-compatível com sessão e revisar todas as regras de autorização no
-backend.
-
-------------------------------------------------------------------------
-
-## 🤝 Como o outro desenvolvedor atualiza o projeto
-
-**Não é necessário baixar os ZIPs usados durante o desenvolvimento.**
-Depois que um Pull Request for integrado à `main`, o Otávio pode
-atualizar o código com:
-
-``` bash
+```bash
 git switch main
 git pull origin main
+cd gearflow-frontend
+npm install
 ```
 
-Na pasta `gearflow-frontend`, execute `npm install` para instalar novas
-dependências. O Maven Wrapper cuida das dependências do backend.
+O GitHub compartilha o **código**, não os arquivos ZIP utilizados na instalação nem o banco MySQL local. Caso existam alterações locais não commitadas, organize-as antes do `git switch`.
 
-O **MySQL e as variáveis de ambiente** precisam ser configurados em cada
-computador. O Git não transfere dados de bancos locais. Se houver
-alterações não commitadas, organize-as antes de trocar de branch.
+## Desenvolvedores
 
-------------------------------------------------------------------------
+**Gabriel Cotrim Miron** — [GitHub](https://github.com/GabrielCotrimMiron)
+**Otávio Felício** — [GitHub](https://github.com/tatofelicio)
 
-## 🔄 Versionamento e Colaboração
-
-O projeto utiliza Git e GitHub para controle de versões e
-desenvolvimento colaborativo.
-
-As funcionalidades são desenvolvidas em branches específicas, permitindo
-que as implementações sejam revisadas antes da integração à branch
-principal.
-
-Fluxo de desenvolvimento:
-
-1.  Criação de uma branch para a funcionalidade.
-2.  Implementação dos requisitos.
-3.  Execução dos testes automatizados.
-4.  Validação dos endpoints.
-5.  Criação de commits.
-6.  Abertura de Pull Request.
-7.  Revisão e integração à branch `main`.
-
-------------------------------------------------------------------------
-
-## 👨‍💻 Desenvolvedores
-
-**Gabriel Cotrim Miron**\
-Engenharia de Software --- UTFPR\
-[GitHub](https://github.com/GabrielCotrimMiron)
-
-**Otávio Felício**\
-Engenharia de Software --- UTFPR
-[GitHub](https://github.com/tatofelicio)
-
-------------------------------------------------------------------------
-
-## 🎓 Contexto Acadêmico
-
-**Instituição:** Universidade Tecnológica Federal do Paraná (UTFPR)\
-**Campus:** Cornélio Procópio\
-**Curso:** Bacharelado em Engenharia de Software\
-**Disciplina:** Programação Orientada a Objetos II
-
-------------------------------------------------------------------------
-
-**GearFlow --- Sistema de Gerenciamento de Oficina Mecânica**
-
-*Projeto acadêmico em desenvolvimento.*
+**UTFPR — Campus Cornélio Procópio | Engenharia de Software | POO II**

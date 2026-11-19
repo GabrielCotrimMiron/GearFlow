@@ -11,4 +11,5 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     // O Spring gera automaticamente a query SQL para procurar o e-mail
     Optional<Usuario> findByEmail(String email);
+    Optional<Usuario> findByEmailIgnoreCase(String email);
 }

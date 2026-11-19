@@ -6,15 +6,12 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @RestController
 @RequestMapping("/agendamentos")
-@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" }, methods = { RequestMethod.GET,
-        RequestMethod.POST, RequestMethod.PATCH, RequestMethod.OPTIONS })
 public class AgendamentoController {
 
     private final AgendamentoService agendamentoService;

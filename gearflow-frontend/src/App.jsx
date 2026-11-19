@@ -64,6 +64,8 @@ function Protegido({ perfil }) {
     return <Navigate to="/dashboard" replace />;
   if (perfil === "FUNCIONARIO" && cliente)
     return <Navigate to="/DashboardCliente" replace />;
+  if (perfil === "GERENTE" && estado.usuario.user !== "GERENTE")
+    return <Navigate to={cliente ? "/DashboardCliente" : "/dashboard"} replace />;
   return <Outlet context={estado.usuario} />;
 }
 
@@ -170,17 +172,19 @@ function App() {
           <Route path="/agendamentos" element={<GestaoAgendamentos />} />
         </Route>
 
-        <Route
-          path="/clientes-admin"
-          element={
-            <DashboardLayout
-              titulo="Gestão de Clientes"
-              subtitulo="Cadastros e informações dos clientes autorizados"
-            >
-              <GestaoClientes />
-            </DashboardLayout>
-          }
-        />
+        <Route element={<Protegido perfil="GERENTE" />}>
+          <Route
+            path="/clientes-admin"
+            element={
+              <DashboardLayout
+                titulo="Gestão de Clientes"
+                subtitulo="Cadastros e informações dos clientes autorizados"
+              >
+                <GestaoClientes />
+              </DashboardLayout>
+            }
+          />
+        </Route>
       </Routes>
     </Router>
   );

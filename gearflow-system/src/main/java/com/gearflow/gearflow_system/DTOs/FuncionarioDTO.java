@@ -9,4 +9,5 @@ public class FuncionarioDTO {
     private String email;
     private String senha;
     private String cpf;
+    private com.gearflow.gearflow_system.Models.NivelAcesso nivelAcesso;
 }

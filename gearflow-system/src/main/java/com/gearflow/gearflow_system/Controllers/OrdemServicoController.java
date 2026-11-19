@@ -74,6 +74,12 @@ public class OrdemServicoController {
     }
 
 
+    // RF05 - Consulta a fila organizada por prioridade.
+    @GetMapping("/fila-prioridade")
+    public List<OrdemServicoGestaoDTO> listarFilaPrioridade() {
+        return ordemServicoService.listarFilaPrioridade();
+    }
+
     // RF05 - Alterar prioridade de uma OS
     @PutMapping("/{id}/prioridade")
     public void alterarPrioridade(
@@ -124,6 +130,12 @@ public class OrdemServicoController {
     @GetMapping
     public List<OrdemServicoGestaoDTO> listarOrdens() {
         return ordemServicoService.listarTodas();
+    }
+
+    @PutMapping("/{id}/finalizar")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void finalizar(@PathVariable Integer id) {
+        ordemServicoService.finalizarOrdem(id);
     }
 
     // RF14 - Cliente aprova o orcamento

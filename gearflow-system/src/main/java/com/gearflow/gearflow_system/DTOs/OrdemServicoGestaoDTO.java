@@ -57,7 +57,7 @@ public record OrdemServicoGestaoDTO(
                                                 os.getVeiculo().getCliente().getNome())),
                 os.getMecanResp() == null ? null
                         : new FuncionarioResumo(os.getMecanResp().getNome()),
-                BigDecimal.valueOf(os.calcularTotal()),
+                os.calcularTotalPreciso(),
                 os.getDesconto() == null
                         ? BigDecimal.ZERO : os.getDesconto(),
                 os.calcularTotalComDesconto(),

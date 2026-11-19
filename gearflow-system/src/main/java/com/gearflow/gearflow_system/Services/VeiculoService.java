@@ -38,6 +38,7 @@ public class VeiculoService {
     @Transactional
     public Veiculo cadastrar(Veiculo veiculo) {
         validarDados(veiculo);
+        validarQuilometragem(veiculo);
 
         if (veiculo.getId() != null) {
             throw new ResponseStatusException(
@@ -99,6 +100,7 @@ public class VeiculoService {
                         HttpStatus.NOT_FOUND,
                         "Cadastro de cliente não encontrado para o usuário logado."));
 
+        validarQuilometragem(veiculo);
         String placa = validarENormalizarPlaca(veiculo.getPlaca());
 
         veiculo.setId(null);
@@ -122,8 +124,18 @@ public class VeiculoService {
     }
 
     @Transactional(readOnly = true)
-    public List<HistoricoManutencaoDTO> buscarHistorico(Integer veiculoId) {
-        buscarPorId(veiculoId);
+    public List<HistoricoManutencaoDTO> buscarHistorico(Integer veiculoId, Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Autenticação necessária.");
+        }
+        Veiculo veiculo = buscarPorId(veiculoId);
+        boolean funcionario = auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_FUNCIONARIO".equals(a.getAuthority()));
+        if (!funcionario && (veiculo.getCliente() == null
+                || !veiculo.getCliente().getEmail().equalsIgnoreCase(auth.getName()))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Este veículo não pertence à sua conta.");
+        }
 
         List<OrdemServico> ordens = ordemServicoRepository
                 .findByVeiculoIdOrderByDataEntradaDesc(veiculoId);
@@ -135,6 +147,13 @@ public class VeiculoService {
         }
 
         return historico;
+    }
+
+    private void validarQuilometragem(Veiculo veiculo) {
+        if (veiculo.getKmAtual() != null && veiculo.getKmAtual() < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "A quilometragem não pode ser negativa.");
+        }
     }
 
     private String validarENormalizarPlaca(String placaBruta) {
@@ -195,18 +214,9 @@ public class VeiculoService {
                     "A placa é obrigatória.");
         }
 
-        boolean temCliente = veiculo.getCliente() != null &&
-                (veiculo.getCliente().getId() != null ||
-                        (veiculo.getCliente().getEmail() != null && !veiculo.getCliente().getEmail().isBlank()));
         boolean temNome = veiculo.getNomeProprietario() != null
                 && !veiculo.getNomeProprietario().isBlank();
-
         if (!temCliente(veiculo) && !temNome) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Informe o cliente (ID ou e-mail) ou o nome do proprietário.");
-        }
-
-        if (!temCliente && !temNome) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Informe o cliente (ID ou e-mail) ou o nome do proprietário.");
         }

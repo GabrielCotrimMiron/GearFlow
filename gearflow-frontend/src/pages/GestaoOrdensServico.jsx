@@ -91,6 +91,7 @@ export default function GestaoOrdensServico() {
   const [salvandoOS, setSalvandoOS] = useState(false);
   const [feedbackNovaOS, setFeedbackNovaOS] = useState("");
   const [alterandoPrioridade, setAlterandoPrioridade] = useState(null);
+  const [finalizandoOS, setFinalizandoOS] = useState(false);
 
   const auth = () => ({
     "X-Client": "GearFlow",
@@ -160,7 +161,7 @@ export default function GestaoOrdensServico() {
     setFeedbackOrcamento(null);
   };
 
-  const ocupado = adicionandoItem || fechandoRascunho;
+  const ocupado = adicionandoItem || fechandoRascunho || finalizandoOS;
 
   const fecharDetalhes = () => {
     if (ocupado) return;
@@ -415,6 +416,23 @@ export default function GestaoOrdensServico() {
     }
   };
 
+  const finalizarOS = async () => {
+    if (!osDetalhe || osDetalhe.statusOperac !== "EM_EXECUCAO" || ocupado) return;
+    if (!window.confirm(`Finalizar a OS #${osDetalhe.id}? Essa ação não pode ser desfeita.`)) return;
+    setFinalizandoOS(true);
+    setFeedbackOrcamento(null);
+    try {
+      await api.put(`/ordens-servico/${osDetalhe.id}/finalizar`);
+      setOsDetalhe((atual) => atual && { ...atual, statusOperac: "FINALIZADA", statusPag: "PENDENTE" });
+      setFeedbackOrcamento({ tipo: "sucesso", texto: "OS finalizada. Pagamento pendente." });
+      await carregarDados();
+    } catch (erro) {
+      setFeedbackOrcamento({ tipo: "erro", texto: mensagemErro(erro, "Não foi possível finalizar a OS.") });
+    } finally {
+      setFinalizandoOS(false);
+    }
+  };
+
   const ordensFiltradas = ordens.filter((os) => {
     if (filtroStatus !== "TODOS" && os.statusOperac !== filtroStatus) {
       return false;
@@ -438,6 +456,12 @@ export default function GestaoOrdensServico() {
         .toLowerCase()
         .includes(termo),
     );
+  }).sort((a, b) => {
+    const peso = { URGENTE: 0, ALTA: 1, NORMAL: 2 };
+    const prioridadeA = peso[a.prioridade] ?? 2;
+    const prioridadeB = peso[b.prioridade] ?? 2;
+    if (prioridadeA !== prioridadeB) return prioridadeA - prioridadeB;
+    return String(a.dataEntrada ?? "").localeCompare(String(b.dataEntrada ?? ""));
   });
 
   const totalEmAnalise = ordens.filter(
@@ -610,7 +634,8 @@ export default function GestaoOrdensServico() {
                     disabled={
                       alterandoPrioridade !== null ||
                       os.statusOperac === "FINALIZADA" ||
-                      os.statusOperac === "AGUARDANDO_APROVACAO"
+                      os.statusOperac === "AGUARDANDO_APROVACAO" ||
+                      os.statusOperac === "ORCAMENTO_REJEITADO"
                     }
                     onChange={(e) => alterarPrioridade(os.id, e.target.value)}
                   >
@@ -1032,6 +1057,12 @@ export default function GestaoOrdensServico() {
               </section>
 
               <footer className="gf-os-footer">
+                {osDetalhe.statusOperac === "EM_EXECUCAO" && (
+                  <button type="button" className="gf-btn-fechar-orcamento"
+                    onClick={finalizarOS} disabled={ocupado}>
+                    {finalizandoOS ? "Finalizando..." : "Finalizar ordem de serviço"}
+                  </button>
+                )}
                 <button
                   type="button"
                   className="gf-btn-voltar"

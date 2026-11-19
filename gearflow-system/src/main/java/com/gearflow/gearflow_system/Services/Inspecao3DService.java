@@ -69,8 +69,11 @@ public class Inspecao3DService {
                 dados.descricao() == null || dados.descricao().isBlank() || dados.descricao().trim().length() > 1500) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe região, gravidade, título e descrição válidos");
         }
-        if (os.getStatusOperac() == StatusOperacional.FINALIZADA) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "A OS está finalizada e não aceita novos apontamentos");
+        if (os.getStatusOperac() == StatusOperacional.FINALIZADA
+                || os.getStatusOperac() == StatusOperacional.AGUARDANDO_APROVACAO
+                || os.getStatusOperac() == StatusOperacional.ORCAMENTO_REJEITADO) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Esta OS não aceita novos apontamentos neste status.");
         }
         AnotacaoInspecao3D nova = new AnotacaoInspecao3D(os, dados.regiao(), dados.gravidade(),
                 dados.titulo().trim(), dados.descricao().trim());
@@ -81,7 +84,10 @@ public class Inspecao3DService {
     public Inspecao3DDTO.Anotacao atualizar(Integer id, Long anotacaoId, Inspecao3DDTO.Atualizar dados,
                                             Authentication auth) {
         exigirFuncionario(auth);
-        consultarOrdem(id, auth);
+        OrdemServico os = consultarOrdem(id, auth);
+        if (os.getStatusOperac() == StatusOperacional.FINALIZADA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "A OS já está finalizada.");
+        }
         if (dados == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dados ausentes");
         AnotacaoInspecao3D anotacao = anotacoes.findById(anotacaoId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Apontamento não encontrado"));

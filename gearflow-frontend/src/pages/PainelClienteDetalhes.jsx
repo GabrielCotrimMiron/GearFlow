@@ -65,7 +65,7 @@ export default function PainelClienteDetalhes({
     try {
       const { data } = await api.get("/auth/session");
       // Suporta as estruturas de sessão existentes sem supor que todos os campos estejam presentes.
-      setConta(data?.usuario || data?.cliente || data?.user || data || null);
+      setConta(data?.usuario || data?.cliente || data || null);
     } catch (e) {
       setConta(null);
       setErroConta(
@@ -84,7 +84,7 @@ export default function PainelClienteDetalhes({
       .then(({ data }) => {
         if (ativo)
           setConta(
-            data?.usuario || data?.cliente || data?.user || data || null,
+            data?.usuario || data?.cliente || data || null,
           );
       })
       .catch((e) => {

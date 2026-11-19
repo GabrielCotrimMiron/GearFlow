@@ -14,19 +14,22 @@ public class TestConfig {
     @Bean
     public CommandLineRunner instanciarAdmin(UsuarioRepository usuarioRepository, FuncionarioRepository funcionarioRepository) {
         return args -> {
-            // Verifica se o admin já existe para não tentar criar um duplicado a cada Play
+            // Admin de demonstração é opcional e exclusivo do ambiente local.
+            // Ex.: GEARFLOW_DEMO_ADMIN_PASSWORD=uma-senha-de-teste
+            String senhaDemo = System.getenv("GEARFLOW_DEMO_ADMIN_PASSWORD");
+            if (senhaDemo == null || senhaDemo.isBlank()) return;
             if (usuarioRepository.findByEmail("admin@gearflow.com").isEmpty()) {
 
                 Funcionario admin = new Funcionario();
                 admin.setNome("Administrador");
                 admin.setEmail("admin@gearflow.com");
-                admin.setSenha("admin123");
+                admin.setSenha(senhaDemo);
                 admin.setNivelAcesso(NivelAcesso.GERENTE);
 
                 // O save no FuncionarioRepository preenche as tabelas 'usuario' e 'funcionario' automaticamente
                 funcionarioRepository.save(admin);
 
-                System.out.println("Usuário Admin padrão criado com sucesso!");
+                System.out.println("Administrador de demonstração criado no banco local.");
             }
         };
     }

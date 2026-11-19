@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/veiculos")
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 public class VeiculoController {
 
     private final VeiculoService veiculoService;
@@ -58,8 +57,8 @@ public class VeiculoController {
 
     @GetMapping("/{id}/historico")
     public List<HistoricoManutencaoDTO> buscarHistorico(
-            @PathVariable Integer id) {
+            @PathVariable Integer id, Authentication authentication) {
 
-        return veiculoService.buscarHistorico(id);
+        return veiculoService.buscarHistorico(id, authentication);
     }
 }

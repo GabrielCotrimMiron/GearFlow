@@ -43,7 +43,7 @@ public class AdminClienteController {
     }
 
     private void verificarEmail(String email, Integer idAtual) {
-        usuarios.findByEmail(email).ifPresent(u -> {
+        usuarios.findByEmailIgnoreCase(email).ifPresent(u -> {
             if (idAtual == null || !u.getId().equals(idAtual))
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Este e-mail já está cadastrado.");
         });

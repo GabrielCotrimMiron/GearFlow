@@ -72,6 +72,15 @@ public class AgendamentoService {
 
     @Transactional
     public Agendamento solicitarAgendamento(Agendamento requisicao, Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Cliente não autenticado.");
+        }
+        if (requisicao == null || requisicao.getVeiculo() == null
+                || requisicao.getVeiculo().getId() == null
+                || requisicao.getDataAgendamento() == null || requisicao.getHorario() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Informe veículo, data e horário do agendamento.");
+        }
         Cliente cliente = clienteRepository.findByEmailIgnoreCase(auth.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
 
@@ -110,6 +119,9 @@ public class AgendamentoService {
 
     @Transactional(readOnly = true)
     public List<Agendamento> listarMeusAgendamentos(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Cliente não autenticado.");
+        }
         return agendamentoRepository.findByClienteEmailIgnoreCaseOrderByDataAgendamentoDescHorarioDesc(auth.getName());
     }
 

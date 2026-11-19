@@ -21,7 +21,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-import jakarta.persistence.Column;
 
 @Entity
 @Getter
@@ -73,7 +72,7 @@ public class OrdemServico {
         }
 
         BigDecimal total = itens.stream()
-                .map(item -> BigDecimal.valueOf(item.calcularSubtotal()))
+                .map(ItemOS::calcularSubtotalPreciso)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (desconto.compareTo(total) > 0) {
@@ -86,7 +85,7 @@ public class OrdemServico {
 
     public BigDecimal calcularTotalComDesconto() {
         BigDecimal total = itens.stream()
-                .map(item -> BigDecimal.valueOf(item.calcularSubtotal()))
+                .map(ItemOS::calcularSubtotalPreciso)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return total.subtract(
@@ -107,10 +106,13 @@ public class OrdemServico {
         item.setOrdemServico(null);
     }
 
+    public BigDecimal calcularTotalPreciso() {
+        return itens.stream().map(ItemOS::calcularSubtotalPreciso)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     public double calcularTotal() {
-        return itens.stream()
-                .mapToDouble(ItemOS::calcularSubtotal)
-                .sum();
+        return calcularTotalPreciso().doubleValue();
     }
 
     public void avancarStatus(StatusOperacional novoStatus) {
@@ -154,6 +156,15 @@ public class OrdemServico {
         }
 
         this.statusOperac = StatusOperacional.ORCAMENTO_REJEITADO;
+    }
+
+    // A finalizacao ocorre somente depois da aprovacao do orcamento.
+    public void finalizar() {
+        if (this.statusOperac != StatusOperacional.EM_EXECUCAO) {
+            throw new IllegalStateException("Somente uma OS em execução pode ser finalizada.");
+        }
+        this.statusOperac = StatusOperacional.FINALIZADA;
+        this.statusPag = StatusPagamento.PENDENTE;
     }
 
     public void verificarSeFinalizada() {
